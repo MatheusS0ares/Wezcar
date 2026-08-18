@@ -2,31 +2,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Car, ShieldCheck, Warehouse, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody } from "@/components/ui/card";
 
 export default async function PainelPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
-  const [{ data: profile }, { data: isWorkshopStaff }, { data: isPlatformAdmin }] =
-    await Promise.all([
-      supabase
-        .from("users")
-        .select("name, email, phone, status, tenant_id, created_at")
-        .eq("id", user.id)
-        .single(),
-      supabase.rpc("has_permission", { permission_code: "work_order.update" }),
-      supabase.rpc("has_permission", { permission_code: "platform.super_admin" }),
-    ]);
+  const { user, profile, isWorkshopStaff, isPlatformAdmin } = ctx;
 
+  const supabase = await createClient();
   const { data: tenant } = profile?.tenant_id
     ? await supabase.from("tenants").select("name, slug").eq("id", profile.tenant_id).single()
     : { data: null };

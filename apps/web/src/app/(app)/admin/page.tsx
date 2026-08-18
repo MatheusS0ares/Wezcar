@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Warehouse } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -8,24 +9,17 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { CreateTenantForm } from "./create-tenant-form";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
-  const { data: isPlatformAdmin } = await supabase.rpc("has_permission", {
-    permission_code: "platform.super_admin",
-  });
-
-  if (!isPlatformAdmin) {
+  if (!ctx.isPlatformAdmin) {
     redirect("/painel");
   }
 
+  const supabase = await createClient();
   const { data: tenants } = await supabase
     .from("tenants")
     .select("id, name, slug, status, created_at")

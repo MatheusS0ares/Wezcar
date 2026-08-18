@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -10,16 +11,13 @@ import { ServiceRequestForm } from "./service-request-form";
 import { cancelServiceRequest } from "./actions";
 
 export default async function ChamadosPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
+  const supabase = await createClient();
   const [{ data: vehicles }, { data: tenants }, { data: requests }] = await Promise.all([
     supabase.from("vehicles").select("id, brand, model").order("created_at", { ascending: false }),
     supabase.from("tenants").select("id, name").order("name"),

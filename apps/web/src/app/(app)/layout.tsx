@@ -25,7 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <AppShell user={ctx.user} navItems={navItems}>
+    <AppShell
+      user={{ name: ctx.profile?.name ?? ctx.user.email, email: ctx.user.email }}
+      navItems={navItems}
+    >
       {children}
     </AppShell>
   );

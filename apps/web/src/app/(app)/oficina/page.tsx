@@ -2,28 +2,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClipboardList, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody } from "@/components/ui/card";
 
 export default async function OficinaPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
-  const { data: isWorkshopStaff } = await supabase.rpc("has_permission", {
-    permission_code: "work_order.update",
-  });
-
-  if (!isWorkshopStaff) {
+  if (!ctx.isWorkshopStaff) {
     redirect("/painel");
   }
 
+  const supabase = await createClient();
   const [{ data: requests }, { data: orders }] = await Promise.all([
     supabase.from("service_requests").select("status"),
     supabase.from("work_orders").select("status"),

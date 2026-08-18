@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -13,21 +14,21 @@ import {
 } from "../actions";
 
 export default async function OficinaChamadosPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
-  const { data: isWorkshopStaff } = await supabase.rpc("has_permission", {
+  const supabase = await createClient();
+
+  // service_request.manage is distinct from work_order.update, so this checks it directly
+  // rather than reusing ctx.isWorkshopStaff.
+  const { data: canManageRequests } = await supabase.rpc("has_permission", {
     permission_code: "service_request.manage",
   });
 
-  if (!isWorkshopStaff) {
+  if (!canManageRequests) {
     redirect("/painel");
   }
 

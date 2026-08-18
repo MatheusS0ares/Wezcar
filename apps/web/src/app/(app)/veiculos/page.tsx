@@ -1,22 +1,20 @@
 import { Car } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddVehicleForm, MileageForm } from "./vehicle-forms";
 
 export default async function VeiculosPage() {
-  const supabase = await createClient();
+  const ctx = await getNavContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!ctx) {
     redirect("/entrar");
   }
 
+  const supabase = await createClient();
   const { data: vehicles } = await supabase
     .from("vehicles")
     .select("id, brand, model, plate, manufacture_year, mileage, created_at")
