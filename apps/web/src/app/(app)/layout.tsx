@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Car, Home, ShieldCheck, Warehouse, Wrench } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { getNavContext } from "@/lib/nav";
 
@@ -11,17 +10,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const navItems: NavItem[] = [
-    { href: "/painel", label: "Painel", icon: Home },
-    { href: "/veiculos", label: "Veículos", icon: Car },
-    { href: "/chamados", label: "Chamados", icon: Wrench },
+    { href: "/painel", label: "Painel", icon: "home" },
+    { href: "/veiculos", label: "Veículos", icon: "car" },
+    { href: "/chamados", label: "Chamados", icon: "wrench" },
   ];
 
   if (ctx.isWorkshopStaff) {
-    navItems.push({ href: "/oficina", label: "Oficina", icon: Warehouse });
+    navItems.push({ href: "/oficina", label: "Oficina", icon: "warehouse" });
   }
 
   if (ctx.isPlatformAdmin) {
-    navItems.push({ href: "/admin", label: "Admin", icon: ShieldCheck });
+    navItems.push({ href: "/admin", label: "Admin", icon: "shield" });
   }
 
   return (

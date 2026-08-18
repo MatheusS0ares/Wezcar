@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import { LogOut } from "lucide-react";
+import { Car, Home, LogOut, ShieldCheck, Warehouse, Wrench } from "lucide-react";
 import { logout } from "@/app/entrar/actions";
+
+// A Server Component can't pass a component *reference* (e.g. the Home icon itself) as a
+// prop to a Client Component — only serializable data. So the layout passes an icon *key*,
+// and this map (which only exists client-side) resolves it to the actual icon component.
+const ICONS = { home: Home, car: Car, wrench: Wrench, warehouse: Warehouse, shield: ShieldCheck };
 
 export type NavItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: keyof typeof ICONS;
 };
 
 export function AppShell({
@@ -37,20 +41,23 @@ export function AppShell({
           </span>
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive(item.href)
-                  ? "bg-[var(--wz-primary)]/10 text-[var(--wz-primary)]"
-                  : "text-[var(--wz-text-secondary)] hover:bg-[var(--wz-background)] hover:text-[var(--wz-text-primary)]"
-              }`}
-            >
-              <item.icon className="h-4 w-4" strokeWidth={2} />
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive(item.href)
+                    ? "bg-[var(--wz-primary)]/10 text-[var(--wz-primary)]"
+                    : "text-[var(--wz-text-secondary)] hover:bg-[var(--wz-background)] hover:text-[var(--wz-text-primary)]"
+                }`}
+              >
+                <Icon className="h-4 w-4" strokeWidth={2} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="border-t border-[var(--wz-border)] p-4">
           <p className="truncate text-sm font-medium text-[var(--wz-text-primary)]">
@@ -108,20 +115,23 @@ export function AppShell({
 
         {/* Bottom tab bar — mobile only */}
         <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-[var(--wz-border)] bg-[var(--wz-surface)] md:hidden">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium ${
-                isActive(item.href)
-                  ? "text-[var(--wz-primary)]"
-                  : "text-[var(--wz-text-secondary)]"
-              }`}
-            >
-              <item.icon className="h-5 w-5" strokeWidth={2} />
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium ${
+                  isActive(item.href)
+                    ? "text-[var(--wz-primary)]"
+                    : "text-[var(--wz-text-secondary)]"
+                }`}
+              >
+                <Icon className="h-5 w-5" strokeWidth={2} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </div>
