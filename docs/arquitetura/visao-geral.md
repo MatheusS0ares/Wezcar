@@ -40,7 +40,8 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | --- | --- |
 | auth, users, tenants | ✅ Fundação |
 | organizations, workshops | ⏳ |
-| customers, vehicles, vehicle-life, maintenance | ⏳ |
+| vehicles (cadastro + histórico de quilometragem) | ✅ ETAPA 4 |
+| customers, vehicle-life, maintenance | ⏳ |
 | service-requests, diagnostics, work-orders, estimates, appointments, sla, pickup-delivery | ⏳ |
 | products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |

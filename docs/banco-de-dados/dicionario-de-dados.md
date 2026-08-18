@@ -14,6 +14,10 @@ e a seção de convenções no README). Migrations em `supabase/migrations/`.
   original lista `ROLES` e `PERMISSIONS` como tabelas separadas, mas alguma
   tabela de ligação é necessária para RBAC funcionar. São consideradas parte
   do mesmo grupo "ROLES / PERMISSIONS" do documento original.
+- **`vehicles.customer_id` referencia `public.users` diretamente**, e não uma
+  tabela `CUSTOMERS` separada. Ainda não existe nenhum dado exclusivo de
+  cliente (cpf, data de nascimento) sendo coletado — quando existir, criar
+  `CUSTOMERS` (conforme o dicionário original) e migrar a referência.
 
 ## TENANTS
 
@@ -94,6 +98,55 @@ Chave primária composta `(user_id, role_id)`. Um trigger
 (`enforce_user_role_tenant_match`) impede atribuir a um usuário um papel de
 um tenant diferente do seu.
 
+## VEHICLES
+
+RN-VEH-001: cliente só visualiza/altera veículos associados à sua conta
+(`customer_id = auth.uid()`, via RLS).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| customer_id | UUID | Sim | FK → `users` (ver desvio do dicionário acima) |
+| plate | VARCHAR(10) | Não | Placa |
+| brand | VARCHAR(100) | Sim | Marca |
+| model | VARCHAR(100) | Sim | Modelo |
+| version | VARCHAR(100) | Não | Versão |
+| manufacture_year | INT | Não | Ano de fabricação |
+| model_year | INT | Não | Ano modelo |
+| engine | VARCHAR(100) | Não | Motor |
+| fuel_type | VARCHAR(30) | Não | Combustível |
+| color | VARCHAR(50) | Não | Cor |
+| mileage | INT | Não | Quilometragem atual (só muda via `vehicle_mileage_history`, nunca por UPDATE direto — coluna sem GRANT de update para `authenticated`) |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## VEHICLE_MILEAGE_HISTORY
+
+Histórico de quilometragem, somente inserção (sem policy de UPDATE/DELETE —
+histórico não é editado nem apagado).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| vehicle_id | UUID | Sim | FK → vehicles |
+| mileage | INT | Sim | Quilometragem registrada |
+| source | VARCHAR(30) | Sim | `INITIAL` (criada junto com o veículo) ou `MANUAL` (atualização do cliente) |
+| recorded_at | TIMESTAMPTZ | Sim | Data do registro |
+| recorded_by | UUID | Não | Usuário que registrou |
+
+Um trigger (`sync_vehicle_mileage`) mantém `vehicles.mileage` sempre igual à
+última entrada do histórico, e **rejeita** uma nova quilometragem menor que a
+atual (o odômetro não regride). Outro trigger
+(`seed_initial_mileage_history`) cria a primeira entrada (`source = INITIAL`)
+automaticamente quando o veículo é cadastrado com uma quilometragem inicial.
+
+## PLATFORM_ADMIN *(papel — "Wezcar Admin")*
+
+Não é uma tabela nova, mas um registro em `roles` (`tenant_id` nulo, como
+`CUSTOMER`) com a permissão `platform.super_admin` — enxerga todos os tenants
+e usuários, e pode criar/administrar tenants (via `tenant.manage`). Ver
+`docs/seguranca/rls-e-autenticacao.md` para como esse papel é concedido (não
+há fluxo de autoatendimento — é sempre uma ação manual via SQL).
+
 ## Funções auxiliares de RLS
 
 | Função | Retorno | Uso |
@@ -103,7 +156,6 @@ um tenant diferente do seu.
 
 ## Próximas tabelas
 
-`CUSTOMERS`, `VEHICLES`, `VEHICLE_MILEAGE_HISTORY`, `WORKSHOPS`,
-`SERVICE_REQUESTS` etc. entram quando as respectivas etapas do roadmap forem
-implementadas — ver o documento original do projeto, PARTE XIII, para o
-dicionário-alvo completo.
+`CUSTOMERS`, `WORKSHOPS`, `SERVICE_REQUESTS` etc. entram quando as
+respectivas etapas do roadmap forem implementadas — ver o documento original
+do projeto, PARTE XIII, para o dicionário-alvo completo.

@@ -7,7 +7,9 @@ regras). Coluna "Status" reflete o que já está implementado neste repositório
 | --- | --- | --- | --- |
 | RN-AUTH-001 | Senha nunca é armazenada em texto puro. | Alta | ✅ Delegado ao Supabase Auth |
 | RN-TENANT-001 | Usuário de um tenant não pode acessar registros de outro tenant. | Crítica | ✅ RLS + teste pgTAP (`supabase/tests/database/0001_multitenancy_isolation.test.sql`) |
-| RN-VEH-001 | Cliente só visualiza/altera veículos associados à sua conta. | Alta | ⏳ Depende da tabela `vehicles` (ainda não criada) |
+| RN-VEH-001 | Cliente só visualiza/altera veículos associados à sua conta. | Alta | ✅ RLS + teste pgTAP (`0002_vehicles_isolation.test.sql`) |
+| RN-VEH-002 *(nova)* | Quilometragem do veículo nunca regride e só muda por registro no histórico, nunca por UPDATE direto. | Alta | ✅ Trigger `sync_vehicle_mileage` + teste pgTAP |
+| RN-ADMIN-001 *(nova)* | Não existe autoatendimento para virar administrador da plataforma (`PLATFORM_ADMIN`) — só concedido manualmente via SQL. | Crítica | ✅ RLS + teste pgTAP (`0003_platform_admin.test.sql`) |
 | RN-MNT-001 | Próxima manutenção considera quilometragem ou tempo, o que ocorrer primeiro. | Alta | ⏳ Depende do módulo de manutenção |
 | RN-OS-001 | OS utilizada não deve ser excluída; cancelamento preserva histórico. | Alta | ⏳ Depende do módulo de ordens de serviço |
 | RN-EST-001 | Orçamento enviado deve ser versionado quando alterado. | Alta | ⏳ Depende do módulo de orçamento |

@@ -149,6 +149,76 @@ export type Database = {
           },
         ];
       };
+      vehicles: {
+        Row: {
+          id: string;
+          customer_id: string;
+          plate: string | null;
+          brand: string;
+          model: string;
+          version: string | null;
+          manufacture_year: number | null;
+          model_year: number | null;
+          engine: string | null;
+          fuel_type: string | null;
+          color: string | null;
+          mileage: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          plate?: string | null;
+          brand: string;
+          model: string;
+          version?: string | null;
+          manufacture_year?: number | null;
+          model_year?: number | null;
+          engine?: string | null;
+          fuel_type?: string | null;
+          color?: string | null;
+          mileage?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["vehicles"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_customer_id_fkey";
+            columns: ["customer_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      vehicle_mileage_history: {
+        Row: {
+          id: string;
+          vehicle_id: string;
+          mileage: number;
+          source: string;
+          recorded_at: string;
+          recorded_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id: string;
+          mileage: number;
+          source?: string;
+          recorded_at?: string;
+          recorded_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["vehicle_mileage_history"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_mileage_history_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -174,4 +244,5 @@ export type PermissionCode =
   | "vehicle.create"
   | "vehicle.update"
   | "work_order.update"
-  | "estimate.approve";
+  | "estimate.approve"
+  | "platform.super_admin";

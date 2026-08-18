@@ -3,9 +3,11 @@
 > A vida do seu carro em um só lugar.
 
 Monorepo da Wezcar — plataforma que conecta clientes, oficinas e autopeças,
-acompanhando a vida do veículo e a gestão da oficina. Este README cobre a
-**Fundação** do projeto (ETAPA 1-3 do roadmap): repositório, banco de dados
-multi-tenant no Supabase e autenticação no Next.js/Vercel.
+acompanhando a vida do veículo e a gestão da oficina. Este README cobre o que
+já foi construído: a **Fundação** (ETAPA 1-3 do roadmap — repositório, banco
+multi-tenant no Supabase, autenticação no Next.js/Vercel), o início da
+**ETAPA 4** (cadastro de veículo + histórico de quilometragem) e o papel
+**PLATFORM_ADMIN** ("Wezcar Admin").
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
@@ -77,8 +79,10 @@ pnpm dev
 ```
 
 Abra http://localhost:3000. `/cadastro` cria uma conta de cliente, `/entrar`
-faz login, `/painel` é a área autenticada e `/api/health` verifica a conexão
-com o banco.
+faz login, `/painel` é a área autenticada, `/veiculos` cadastra veículos e
+atualiza quilometragem, `/admin` é o Wezcar Admin (só para quem tem o papel
+`PLATFORM_ADMIN` — ver `docs/seguranca/rls-e-autenticacao.md`) e
+`/api/health` verifica a conexão com o banco.
 
 ### Rodando os testes de banco (RLS / isolamento de tenant)
 

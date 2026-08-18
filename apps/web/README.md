@@ -12,6 +12,8 @@ Supabase local e fazer deploy.
 | `/cadastro` | Criar conta (cliente) |
 | `/entrar` | Login |
 | `/painel` | Área autenticada (protegida por `src/proxy.ts`) |
+| `/veiculos` | Cadastro de veículos + atualização de quilometragem |
+| `/admin` | Wezcar Admin — só para quem tem o papel `PLATFORM_ADMIN` |
 | `/api/health` | Healthcheck (verifica conexão com o Supabase) |
 
 ## Estrutura

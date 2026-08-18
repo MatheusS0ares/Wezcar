@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/entrar/actions";
@@ -27,19 +28,41 @@ export default async function PainelPage() {
         .single()
     : { data: null };
 
+  const { data: isPlatformAdmin } = await supabase.rpc("has_permission", {
+    permission_code: "platform.super_admin",
+  });
+
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-16">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-[var(--wz-text-primary)]">Painel</h1>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="rounded-lg border border-[var(--wz-border)] px-4 py-2 text-sm font-medium text-[var(--wz-text-secondary)] hover:bg-[var(--wz-surface)]"
-          >
-            Sair
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          {isPlatformAdmin && (
+            <Link
+              href="/admin"
+              className="rounded-lg border border-[var(--wz-border)] px-4 py-2 text-sm font-medium text-[var(--wz-text-primary)] hover:bg-[var(--wz-background)]"
+            >
+              Wezcar Admin
+            </Link>
+          )}
+          <form action={logout}>
+            <button
+              type="submit"
+              className="rounded-lg border border-[var(--wz-border)] px-4 py-2 text-sm font-medium text-[var(--wz-text-secondary)] hover:bg-[var(--wz-surface)]"
+            >
+              Sair
+            </button>
+          </form>
+        </div>
       </div>
+
+      <Link
+        href="/veiculos"
+        className="mb-4 flex items-center justify-between rounded-xl border border-[var(--wz-border)] bg-[var(--wz-surface)] p-4 hover:border-[var(--wz-primary)]"
+      >
+        <span className="font-medium text-[var(--wz-text-primary)]">Meus veículos</span>
+        <span className="text-[var(--wz-text-secondary)]">→</span>
+      </Link>
 
       <dl className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--wz-border)] bg-[var(--wz-surface)] p-6 sm:grid-cols-2">
         <Field label="Nome" value={profile?.name ?? "—"} />

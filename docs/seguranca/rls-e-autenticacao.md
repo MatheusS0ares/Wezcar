@@ -11,7 +11,7 @@ documento original, item 80).
   Server Actions e Route Handlers (usa cookies via `next/headers`).
 - `apps/web/src/proxy.ts` — roda em toda request, renova o cookie de sessão
   e redireciona visitantes não autenticados para `/entrar` em rotas
-  protegidas (hoje: `/painel`).
+  protegidas (hoje: `/painel`, `/veiculos`, `/admin`).
 - Cadastro público (`/cadastro`) cria **apenas contas de cliente** (sem
   `tenant_id`). Contas de funcionário de oficina não têm fluxo de
   autoatendimento ainda — isso é proposital: criação de tenant/convite de
@@ -46,17 +46,47 @@ o papel certo, a tabela simplesmente não aparece pela API, mesmo para
 grants necessários (ver `20260818010500_rls_policies_and_grants.sql`) — não
 esqueça isso ao criar tabelas novas.
 
+## Wezcar Admin (papel `PLATFORM_ADMIN`)
+
+Papel de sistema (`tenant_id` nulo) com a permissão `platform.super_admin`,
+que faz as policies de `SELECT` em `tenants`, `users`, `roles`,
+`role_permissions` e `user_roles` ignorarem o filtro de tenant (ver
+`20260818020100_platform_admin.sql`). Também recebe `tenant.manage`, que
+libera `INSERT`/`UPDATE`/`DELETE` em `tenants` (tela `/admin`).
+
+**Não existe fluxo de autoatendimento para virar `PLATFORM_ADMIN`** — nenhum
+botão no app concede esse papel. É sempre uma ação manual, rodada como
+`postgres` (SQL Editor do Supabase) ou `service_role`:
+
+```sql
+insert into public.user_roles (user_id, role_id)
+select u.id, r.id
+from public.users u, public.roles r
+where u.email = 'seu-email@exemplo.com'
+  and r.name = 'PLATFORM_ADMIN' and r.tenant_id is null;
+```
+
+`/painel` mostra um link para `/admin` só para quem tem essa permissão
+(checado via `supabase.rpc('has_permission', { permission_code: '...' })`);
+`/admin` também revalida isso no servidor antes de renderizar.
+
 ## Testes
 
-`supabase/tests/database/0001_multitenancy_isolation.test.sql` (pgTAP) prova,
-com dois tenants e um cliente:
+Testes pgTAP em `supabase/tests/database/`:
 
-1. o trigger de signup copia `tenant_id` do metadata para `public.users`;
-2. signup sem `tenant_id` vira cliente e recebe o papel `CUSTOMER`;
-3. um funcionário só enxerga o próprio tenant em `tenants` e `users`;
-4. um funcionário **não consegue escrever** no perfil de um funcionário de
-   outro tenant (a `UPDATE` afeta 0 linhas);
-5. um cliente não enxerga nenhum tenant e só o próprio perfil em `users`.
+- `0001_multitenancy_isolation.test.sql` — com dois tenants e um cliente,
+  prova que: o trigger de signup copia `tenant_id` do metadata para
+  `public.users`; signup sem `tenant_id` vira cliente e recebe o papel
+  `CUSTOMER`; um funcionário só enxerga o próprio tenant em `tenants` e
+  `users`; um funcionário não consegue escrever no perfil de um funcionário
+  de outro tenant; um cliente não enxerga nenhum tenant.
+- `0002_vehicles_isolation.test.sql` — RN-VEH-001 e RN-VEH-002: um cliente
+  não enxerga nem altera veículo/histórico de outro cliente; quilometragem
+  não pode regredir; `UPDATE` direto em `vehicles.mileage` é rejeitado
+  (sem GRANT na coluna); inserir no histórico sincroniza `vehicles.mileage`.
+- `0003_platform_admin.test.sql` — RN-ADMIN-001: um `PLATFORM_ADMIN` enxerga
+  todos os tenants/usuários e consegue criar tenant; um cliente comum não
+  enxerga nenhum tenant e não consegue criar um.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de
