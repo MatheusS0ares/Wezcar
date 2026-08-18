@@ -1,0 +1,18 @@
+{
+  "name": "wezcar",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @wezcar/web dev",
+    "build": "pnpm --filter @wezcar/web build",
+    "lint": "pnpm --filter @wezcar/web lint",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:test": "supabase test db"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

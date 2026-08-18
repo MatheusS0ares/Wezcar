@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* Wezcar Design System (WDS) tokens — docs/decisoes/0002-design-tokens.md */
+:root {
+  --wz-primary: #2563eb;
+  --wz-primary-dark: #1e40af;
+  --wz-cyan: #06b6d4;
+  --wz-vehicle-health: #84cc16;
+  --wz-background: #f8fafc;
+  --wz-surface: #ffffff;
+  --wz-text-primary: #0f172a;
+  --wz-text-secondary: #64748b;
+  --wz-border: #e2e8f0;
+  --wz-success: #16a34a;
+  --wz-warning: #f59e0b;
+  --wz-danger: #dc2626;
+  --wz-info: #0284c7;
+
+  --background: var(--wz-background);
+  --foreground: var(--wz-text-primary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wz-background: #0b1120;
+    --wz-surface: #111827;
+    --wz-text-primary: #f8fafc;
+    --wz-text-secondary: #94a3b8;
+    --wz-border: #1e293b;
+    --wz-primary: #3b82f6;
+    --wz-cyan: #22d3ee;
+
+    --background: var(--wz-background);
+    --foreground: var(--wz-text-primary);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

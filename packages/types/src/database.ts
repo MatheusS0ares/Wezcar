@@ -1,0 +1,177 @@
+/**
+ * Hand-written until the project has a real Supabase project to generate against.
+ * Once `supabase link` is run, replace this file's contents with the output of:
+ *   supabase gen types typescript --linked > packages/types/src/database.ts
+ * Shape mirrors supabase/migrations/*.sql — keep both in sync.
+ */
+export type Database = {
+  public: {
+    Tables: {
+      tenants: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          status: "ACTIVE" | "SUSPENDED" | "CANCELED";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          status?: "ACTIVE" | "SUSPENDED" | "CANCELED";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tenants"]["Insert"]>;
+        Relationships: [];
+      };
+      users: {
+        Row: {
+          id: string;
+          tenant_id: string | null;
+          name: string;
+          email: string;
+          phone: string | null;
+          status: "ACTIVE" | "INACTIVE" | "BLOCKED";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          tenant_id?: string | null;
+          name: string;
+          email: string;
+          phone?: string | null;
+          status?: "ACTIVE" | "INACTIVE" | "BLOCKED";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "users_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      roles: {
+        Row: {
+          id: string;
+          tenant_id: string | null;
+          name: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id?: string | null;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["roles"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "roles_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      permissions: {
+        Row: {
+          id: string;
+          code: string;
+          description: string | null;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          description?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["permissions"]["Insert"]>;
+        Relationships: [];
+      };
+      role_permissions: {
+        Row: {
+          role_id: string;
+          permission_id: string;
+        };
+        Insert: {
+          role_id: string;
+          permission_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["role_permissions"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey";
+            columns: ["role_id"];
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey";
+            columns: ["permission_id"];
+            referencedRelation: "permissions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_roles: {
+        Row: {
+          user_id: string;
+          role_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          role_id: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_roles"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey";
+            columns: ["role_id"];
+            referencedRelation: "roles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: {
+      current_tenant_id: {
+        Args: Record<string, never>;
+        Returns: string | null;
+      };
+      has_permission: {
+        Args: { permission_code: string };
+        Returns: boolean;
+      };
+    };
+    Enums: Record<string, never>;
+  };
+};
+
+export type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+
+export type PermissionCode =
+  | "tenant.manage"
+  | "user.manage"
+  | "vehicle.create"
+  | "vehicle.update"
+  | "work_order.update"
+  | "estimate.approve";
