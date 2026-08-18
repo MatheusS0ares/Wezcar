@@ -39,10 +39,11 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | Módulo | Status |
 | --- | --- |
 | auth, users, tenants | ✅ Fundação |
-| organizations, workshops | ⏳ |
+| organizations, workshops | ⏳ (tenant simplificado = oficina) |
 | vehicles (cadastro + histórico de quilometragem) | ✅ ETAPA 4 |
+| service-requests, work-orders (chamados + OS, sem diagnóstico/orçamento) | ✅ primeira fatia |
 | customers, vehicle-life, maintenance | ⏳ |
-| service-requests, diagnostics, work-orders, estimates, appointments, sla, pickup-delivery | ⏳ |
+| diagnostics, estimates, appointments, sla, pickup-delivery | ⏳ |
 | products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |
 | notifications, chat, reviews, reports, analytics | ⏳ |

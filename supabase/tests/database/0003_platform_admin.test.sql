@@ -43,13 +43,13 @@ select is(
 
 reset role;
 
--- ── um cliente comum não enxerga outros tenants nem pode criar um ───────────
+-- ── um cliente comum vê o diretório de tenants ativos, mas não pode criar um ─
 set local role authenticated;
 set local request.jwt.claim.sub = '99999999-9999-9999-9999-999999999999';
 
-select is(
-  (select count(*) from public.tenants)::int, 0,
-  'cliente comum (sem platform.super_admin) não enxerga nenhum tenant'
+select ok(
+  (select count(*) from public.tenants) >= 3,
+  'cliente comum (sem platform.super_admin) vê o diretório de tenants ativos'
 );
 
 select throws_ok(

@@ -4,10 +4,12 @@
 
 Monorepo da Wezcar — plataforma que conecta clientes, oficinas e autopeças,
 acompanhando a vida do veículo e a gestão da oficina. Este README cobre o que
-já foi construído: a **Fundação** (ETAPA 1-3 do roadmap — repositório, banco
-multi-tenant no Supabase, autenticação no Next.js/Vercel), o início da
-**ETAPA 4** (cadastro de veículo + histórico de quilometragem) e o papel
-**PLATFORM_ADMIN** ("Wezcar Admin").
+já foi construído: a **Fundação** (ETAPA 1-3 — repositório, banco
+multi-tenant no Supabase, autenticação), **ETAPA 4** (cadastro de veículo +
+histórico de quilometragem), a primeira fatia da **Wezcar Oficina** (chamados
+e ordens de serviço), os papéis **PLATFORM_ADMIN** ("Wezcar Admin") e
+**WORKSHOP_ADMIN**, e um shell/design system inicial (`docs/decisoes/
+0003-design-system-shell.md`).
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
@@ -79,10 +81,12 @@ pnpm dev
 ```
 
 Abra http://localhost:3000. `/cadastro` cria uma conta de cliente, `/entrar`
-faz login, `/painel` é a área autenticada, `/veiculos` cadastra veículos e
-atualiza quilometragem, `/admin` é o Wezcar Admin (só para quem tem o papel
-`PLATFORM_ADMIN` — ver `docs/seguranca/rls-e-autenticacao.md`) e
-`/api/health` verifica a conexão com o banco.
+faz login. Dentro da área autenticada: `/painel` (visão geral), `/veiculos`
+(cadastro + quilometragem), `/chamados` (cliente abre chamado para uma
+oficina), `/oficina` (dashboard + `/oficina/chamados` + `/oficina/os` — só
+para quem tem o papel `WORKSHOP_ADMIN`) e `/admin` (Wezcar Admin, só para
+`PLATFORM_ADMIN`) — ver `docs/seguranca/rls-e-autenticacao.md` para como
+conceder esses papéis. `/api/health` verifica a conexão com o banco.
 
 ### Rodando os testes de banco (RLS / isolamento de tenant)
 

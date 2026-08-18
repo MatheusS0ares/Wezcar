@@ -18,6 +18,16 @@ e a seção de convenções no README). Migrations em `supabase/migrations/`.
   tabela `CUSTOMERS` separada. Ainda não existe nenhum dado exclusivo de
   cliente (cpf, data de nascimento) sendo coletado — quando existir, criar
   `CUSTOMERS` (conforme o dicionário original) e migrar a referência.
+- **Um `tenant` É a oficina** (não existe uma hierarquia separada
+  tenant → organization → company → branch/workshop, como sugere a
+  Especificação Técnica mais recente). Simplificação deliberada enquanto só
+  existe um nível operacional; revisitar se surgir a necessidade real de
+  redes com múltiplas filiais dentro do mesmo grupo empresarial.
+- **Qualquer usuário autenticado pode listar tenants ativos** (policy
+  `tenants_select_active_directory`), não só o próprio. Necessário para o
+  cliente escolher uma oficina ao abrir um chamado — não há ainda busca por
+  proximidade (PostGIS/geolocalização é trabalho futuro). Nome/slug de um
+  tenant não é informação sensível.
 
 ## TENANTS
 
@@ -72,10 +82,10 @@ Catálogo global, formato de código `<módulo>.<ação>`.
 | code | VARCHAR(120) | Sim | Código único, ex. `vehicle.create` |
 | description | TEXT | Não | Descrição |
 
-Catálogo inicial (`20260818010600_seed_permissions_and_roles.sql`):
-`tenant.manage`, `user.manage`, `vehicle.create`, `vehicle.update`,
-`work_order.update`, `estimate.approve`. Cada feature nova adiciona seus
-próprios códigos numa migration própria.
+Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
+`vehicle.update`, `work_order.update`, `estimate.approve`,
+`platform.super_admin`, `service_request.manage`. Cada feature nova adiciona
+seus próprios códigos numa migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -147,6 +157,69 @@ e usuários, e pode criar/administrar tenants (via `tenant.manage`). Ver
 `docs/seguranca/rls-e-autenticacao.md` para como esse papel é concedido (não
 há fluxo de autoatendimento — é sempre uma ação manual via SQL).
 
+## SERVICE_REQUESTS *("chamados")*
+
+Primeira fatia do módulo Wezcar Oficina. RN-VEH-001-like: cliente só vê os
+próprios chamados; oficina só vê chamados endereçados a ela.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina (tenant) para quem o chamado foi aberto |
+| customer_id | UUID | Sim | FK → users (dono do veículo) |
+| vehicle_id | UUID | Sim | FK → vehicles (validado por trigger: precisa pertencer a customer_id) |
+| description | TEXT | Sim | Problema relatado |
+| priority | VARCHAR(20) | Sim | `LOW` \| `NORMAL` \| `HIGH` \| `URGENT` |
+| status | VARCHAR(30) | Sim | `OPEN` → `ACCEPTED`/`REJECTED`/`CANCELED` |
+| requested_at | TIMESTAMPTZ | Sim | Abertura |
+| accepted_at | TIMESTAMPTZ | Não | Carimbado automaticamente ao aceitar |
+| closed_at | TIMESTAMPTZ | Não | Carimbado automaticamente ao recusar/cancelar |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+Cliente pode cancelar o próprio chamado só enquanto `OPEN`. Só staff da
+oficina (permissão `service_request.manage`) aceita/recusa.
+
+## WORK_ORDERS *("OS")*
+
+Versão simplificada do dicionário original: sem diagnóstico/orçamento ainda
+(entram quando esses módulos forem construídos). Só staff da própria oficina
+cria/altera; o cliente só lê a própria OS.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina responsável |
+| service_request_id | UUID | Não | Chamado de origem |
+| customer_id | UUID | Sim | FK → users |
+| vehicle_id | UUID | Sim | FK → vehicles (mesmo trigger de ownership de service_requests) |
+| status | VARCHAR(30) | Sim | `OPEN` → `IN_PROGRESS` → `READY` → `DELIVERED` (ou `CANCELED`) |
+| notes | TEXT | Não | Observações |
+| opened_at | TIMESTAMPTZ | Sim | Abertura |
+| completed_at | TIMESTAMPTZ | Não | Carimbado automaticamente ao chegar em `DELIVERED` |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## WORK_ORDER_EVENTS *(timeline)*
+
+Somente inserção — nunca via app, só pelos triggers `log_work_order_created`
+e `log_work_order_status_change` (sem GRANT de INSERT para `authenticated`).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| work_order_id | UUID | Sim | FK → work_orders |
+| event_type | VARCHAR(50) | Sim | `CREATED` \| `STATUS_CHANGE` |
+| old_status / new_status | VARCHAR(30) | Não | Estado antes/depois |
+| description | TEXT | Não | — |
+| created_by | UUID | Não | `auth.uid()` de quem disparou a mudança |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+## WORKSHOP_ADMIN *(papel)*
+
+Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
+`PLATFORM_ADMIN`) com as permissões `service_request.manage` e
+`work_order.update`. Atribuído manualmente via SQL a um usuário com
+`tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
+
 ## Funções auxiliares de RLS
 
 | Função | Retorno | Uso |
@@ -156,6 +229,7 @@ há fluxo de autoatendimento — é sempre uma ação manual via SQL).
 
 ## Próximas tabelas
 
-`CUSTOMERS`, `WORKSHOPS`, `SERVICE_REQUESTS` etc. entram quando as
-respectivas etapas do roadmap forem implementadas — ver o documento original
-do projeto, PARTE XIII, para o dicionário-alvo completo.
+`CUSTOMERS`, `diagnostics`, `estimates`/`estimate_items`, `appointments`
+(agenda), `sla_definitions`/`sla_instances` etc. entram quando as respectivas
+etapas do roadmap forem implementadas — ver a Especificação Técnica para o
+dicionário-alvo completo.

@@ -7,7 +7,9 @@
 --   * a customer (no tenant_id) is auto-assigned the system-wide CUSTOMER role
 --   * RLS lets staff see only their own tenant and their own tenant's users
 --   * RLS blocks cross-tenant writes (staff-beta cannot update staff-alpha's profile)
---   * a customer sees no tenant rows and only their own user row
+--   * any authenticated user (staff or customer) can browse the active-tenant directory
+--     (needed to pick a workshop when opening a chamado — see 20260818030000), but a
+--     customer still only sees their own row in public.users
 
 begin;
 select plan(9);
@@ -51,8 +53,8 @@ set local role authenticated;
 set local request.jwt.claim.sub = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
 select is(
-  (select count(*) from public.tenants)::int, 1,
-  'staff-alpha sees exactly one tenant (their own)'
+  (select count(*) from public.tenants)::int, 2,
+  'staff-alpha sees both tenants (active-tenant directory), not just their own'
 );
 
 select is(
@@ -68,8 +70,8 @@ set local role authenticated;
 set local request.jwt.claim.sub = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 select is(
-  (select count(*) from public.tenants)::int, 1,
-  'staff-beta sees exactly one tenant (their own)'
+  (select count(*) from public.tenants)::int, 2,
+  'staff-beta sees both tenants (active-tenant directory), not just their own'
 );
 
 update public.users set name = 'HACKED' where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -81,13 +83,13 @@ select is(
 
 reset role;
 
--- ── RLS: the customer has no tenant, sees no tenants, only their own profile ──
+-- ── RLS: the customer has no tenant, but can browse the directory; only own profile ──
 set local role authenticated;
 set local request.jwt.claim.sub = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
 select is(
-  (select count(*) from public.tenants)::int, 0,
-  'a customer (no tenant) sees zero rows in public.tenants'
+  (select count(*) from public.tenants)::int, 2,
+  'a customer (no tenant) still sees the active-tenant directory (to pick a workshop)'
 );
 
 select is(

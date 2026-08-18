@@ -219,6 +219,143 @@ export type Database = {
           },
         ];
       };
+      service_requests: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          customer_id: string;
+          vehicle_id: string;
+          description: string;
+          priority: string;
+          status: string;
+          requested_at: string;
+          accepted_at: string | null;
+          closed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          customer_id: string;
+          vehicle_id: string;
+          description: string;
+          priority?: string;
+          status?: string;
+          requested_at?: string;
+          accepted_at?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["service_requests"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_requests_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_requests_customer_id_fkey";
+            columns: ["customer_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      work_orders: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          service_request_id: string | null;
+          customer_id: string;
+          vehicle_id: string;
+          status: string;
+          notes: string | null;
+          opened_at: string;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          service_request_id?: string | null;
+          customer_id: string;
+          vehicle_id: string;
+          status?: string;
+          notes?: string | null;
+          opened_at?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["work_orders"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "work_orders_service_request_id_fkey";
+            columns: ["service_request_id"];
+            referencedRelation: "service_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "work_orders_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "work_orders_customer_id_fkey";
+            columns: ["customer_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      work_order_events: {
+        Row: {
+          id: string;
+          work_order_id: string;
+          event_type: string;
+          old_status: string | null;
+          new_status: string | null;
+          description: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          work_order_id: string;
+          event_type: string;
+          old_status?: string | null;
+          new_status?: string | null;
+          description?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["work_order_events"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "work_order_events_work_order_id_fkey";
+            columns: ["work_order_id"];
+            referencedRelation: "work_orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -245,4 +382,8 @@ export type PermissionCode =
   | "vehicle.update"
   | "work_order.update"
   | "estimate.approve"
-  | "platform.super_admin";
+  | "platform.super_admin"
+  | "service_request.manage";
+
+export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
+export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";

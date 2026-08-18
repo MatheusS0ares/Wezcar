@@ -11,7 +11,7 @@ documento original, item 80).
   Server Actions e Route Handlers (usa cookies via `next/headers`).
 - `apps/web/src/proxy.ts` — roda em toda request, renova o cookie de sessão
   e redireciona visitantes não autenticados para `/entrar` em rotas
-  protegidas (hoje: `/painel`, `/veiculos`, `/admin`).
+  protegidas (hoje: `/painel`, `/veiculos`, `/admin`, `/chamados`, `/oficina`).
 - Cadastro público (`/cadastro`) cria **apenas contas de cliente** (sem
   `tenant_id`). Contas de funcionário de oficina não têm fluxo de
   autoatendimento ainda — isso é proposital: criação de tenant/convite de
@@ -70,6 +70,43 @@ where u.email = 'seu-email@exemplo.com'
 (checado via `supabase.rpc('has_permission', { permission_code: '...' })`);
 `/admin` também revalida isso no servidor antes de renderizar.
 
+## Wezcar Oficina (papel `WORKSHOP_ADMIN`)
+
+Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
+nulo) com as permissões `service_request.manage` e `work_order.update`. Ao
+contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
+`tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
+policies de `service_requests`/`work_orders` (que exigem
+`tenant_id = current_tenant_id()`) deixem algo visível.
+
+Também não há autoatendimento: um cliente não vira staff de oficina sozinho.
+Para transformar um usuário existente em staff de uma oficina:
+
+```sql
+-- 1. Definir o tenant_id do usuário (se ainda não tiver)
+update public.users set tenant_id = '<TENANT_ID_DA_OFICINA>' where email = 'staff@exemplo.com';
+
+-- 2. Conceder o papel WORKSHOP_ADMIN
+insert into public.user_roles (user_id, role_id)
+select u.id, r.id
+from public.users u, public.roles r
+where u.email = 'staff@exemplo.com'
+  and r.name = 'WORKSHOP_ADMIN' and r.tenant_id is null;
+```
+
+`/painel` mostra o atalho para `/oficina` só para quem tem
+`work_order.update`; `/oficina`, `/oficina/chamados` e `/oficina/os`
+revalidam isso no servidor.
+
+### Diretório de tenants ativos
+
+Qualquer usuário autenticado (cliente ou staff) pode listar tenants com
+`status = 'ACTIVE'` (policy `tenants_select_active_directory`) — é assim que
+o cliente escolhe uma oficina ao abrir um chamado em `/chamados`. Isso não
+enfraquece o isolamento de tenant: o que continua isolado são os *dados
+operacionais* de cada tenant (`users`, `service_requests`, `work_orders`
+etc.), não a existência/nome público da oficina.
+
 ## Testes
 
 Testes pgTAP em `supabase/tests/database/`:
@@ -85,8 +122,14 @@ Testes pgTAP em `supabase/tests/database/`:
   não pode regredir; `UPDATE` direto em `vehicles.mileage` é rejeitado
   (sem GRANT na coluna); inserir no histórico sincroniza `vehicles.mileage`.
 - `0003_platform_admin.test.sql` — RN-ADMIN-001: um `PLATFORM_ADMIN` enxerga
-  todos os tenants/usuários e consegue criar tenant; um cliente comum não
-  enxerga nenhum tenant e não consegue criar um.
+  todos os tenants/usuários e consegue criar tenant; um cliente comum vê o
+  diretório de tenants ativos mas não consegue criar um.
+- `0004_service_requests_and_work_orders.test.sql` — RN-CHAM-001/002 e
+  RN-OS-002: o trigger de ownership rejeita um chamado com veículo de outro
+  cliente; um cliente só vê os próprios chamados/OS; staff de outra oficina
+  não vê nem consegue aceitar/alterar; aceitar um chamado carimba
+  `accepted_at`; criar uma OS gera o evento `CREATED`; mudar o status gera
+  `STATUS_CHANGE`; o cliente não consegue alterar a própria OS (só ler).
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de

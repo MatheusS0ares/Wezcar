@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/painel", "/veiculos", "/admin"];
+const PROTECTED_PREFIXES = ["/painel", "/veiculos", "/admin", "/chamados", "/oficina"];
 
 /**
  * Next.js 16 renamed `middleware.ts` to `proxy.ts` (same NextRequest/NextResponse API).
