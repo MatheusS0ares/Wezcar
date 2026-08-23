@@ -1,11 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <p className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
-        Wezcar
-      </p>
+      <Image src="/wezcar-logo.png" alt="Wezcar" width={220} height={127} priority />
       <h1 className="mt-3 max-w-xl text-4xl font-semibold text-[var(--wz-text-primary)]">
         A vida do seu carro em um só lugar.
       </h1>

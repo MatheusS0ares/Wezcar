@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -36,6 +37,7 @@ export function AppShell({
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex md:w-60 md:flex-shrink-0 md:flex-col md:border-r md:border-[var(--wz-border)] md:bg-[var(--wz-surface)]">
         <div className="flex items-center gap-2 px-5 py-5">
+          <Image src="/wezcar-icon.png" alt="" width={36} height={19} />
           <span className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
             Wezcar
           </span>
@@ -78,9 +80,12 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar — mobile only */}
         <header className="flex items-center justify-between border-b border-[var(--wz-border)] bg-[var(--wz-surface)] px-4 py-3 md:hidden">
-          <span className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
-            Wezcar
-          </span>
+          <div className="flex items-center gap-2">
+            <Image src="/wezcar-icon.png" alt="" width={34} height={18} />
+            <span className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
+              Wezcar
+            </span>
+          </div>
           <div className="relative">
             <button
               type="button"

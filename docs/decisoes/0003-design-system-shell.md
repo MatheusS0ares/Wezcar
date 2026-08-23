@@ -37,6 +37,13 @@ precisa ser mobile-first de verdade, não uma versão desktop encolhida.
   `docs/decisoes/0002-design-tokens.md`.
 - Ícones via `lucide-react` (leve, tree-shakeable) em vez de SVGs à mão ou um
   set de ícones maior.
+- **Logo oficial** (`apps/web/public/wezcar-logo.png` — lockup completo — e
+  `wezcar-icon.png` — só a marca "W"/chave de boca, recortados com fundo
+  transparente a partir da arte 3D fornecida) substitui o wordmark de texto
+  provisório na landing (`/`), no shell (`AppShell`) e no favicon
+  (`apps/web/src/app/favicon.ico`, gerado a partir do ícone). Os tokens de
+  cor do WDS (ADR 0002) continuam provisórios — ainda não foram atualizados
+  para bater com a paleta real da marca (azul/prata/vermelho).
 
 ## Consequências
 
