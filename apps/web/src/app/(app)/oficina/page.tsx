@@ -4,7 +4,8 @@ import { ClipboardList, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardBody } from "@/components/ui/card";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { SlaSettingsForm } from "./sla-settings-form";
 
 export default async function OficinaPage() {
   const ctx = await getNavContext();
@@ -18,26 +19,38 @@ export default async function OficinaPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: requests }, { data: orders }] = await Promise.all([
+  const [{ data: requests }, { data: orders }, { data: slaDefinition }] = await Promise.all([
     supabase.from("service_requests").select("status"),
-    supabase.from("work_orders").select("status"),
+    supabase.from("work_orders").select("status, work_orders_sla_status"),
+    ctx.profile?.tenant_id
+      ? supabase
+          .from("sla_definitions")
+          .select("default_hours")
+          .eq("tenant_id", ctx.profile.tenant_id)
+          .maybeSingle()
+      : { data: null },
   ]);
 
   const countBy = (rows: { status: string }[] | null, status: string) =>
     rows?.filter((r) => r.status === status).length ?? 0;
+
+  const countBySla = (status: string) =>
+    orders?.filter((o) => o.work_orders_sla_status === status).length ?? 0;
 
   const stats = [
     { label: "Chamados novos", value: countBy(requests, "OPEN") },
     { label: "Chamados aceitos", value: countBy(requests, "ACCEPTED") },
     { label: "OS em execução", value: countBy(orders, "IN_PROGRESS") },
     { label: "OS prontas", value: countBy(orders, "READY") },
+    { label: "SLA em risco", value: countBySla("AT_RISK") },
+    { label: "SLA estourado", value: countBySla("BREACHED") },
   ];
 
   return (
     <div>
       <PageHeader title="Oficina" description="Visão operacional dos chamados e OS." />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardBody>
@@ -50,7 +63,7 @@ export default async function OficinaPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link href="/oficina/chamados">
           <Card className="flex items-center gap-3 px-4 py-5 transition-colors hover:border-[var(--wz-primary)]">
             <ClipboardList className="h-5 w-5 text-[var(--wz-primary)]" />
@@ -64,6 +77,22 @@ export default async function OficinaPage() {
           </Card>
         </Link>
       </div>
+
+      {ctx.profile?.tenant_id && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-sm font-semibold text-[var(--wz-text-primary)]">
+              Prazo de entrega (SLA)
+            </h2>
+          </CardHeader>
+          <CardBody>
+            <SlaSettingsForm
+              tenantId={ctx.profile.tenant_id}
+              currentHours={slaDefinition?.default_hours ?? 48}
+            />
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }

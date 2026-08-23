@@ -18,11 +18,11 @@ não invalidar testes e commits existentes — a regra em si é a mesma.
 | RN-MNT-001 | Próxima manutenção considera quilometragem ou tempo, o que ocorrer primeiro. | Alta | ⏳ Depende do módulo de manutenção |
 | RN-OS-001 | OS utilizada não deve ser excluída; cancelamento preserva histórico. | Alta | ✅ Não há política de DELETE em `work_orders`; toda mudança de status vira evento em `work_order_events` |
 | RN-OS-002 *(nova)* | Criar/alterar OS é exclusivo de staff da própria oficina; cliente só lê a própria OS. | Crítica | ✅ RLS + teste pgTAP |
-| RN-EST-001 | Orçamento enviado deve ser versionado quando alterado. | Alta | ✅ Trigger `version_and_supersede_estimate` (nenhuma policy de UPDATE de conteúdo para staff) + teste pgTAP (`0005_diagnostics_and_estimates.test.sql`) |
+| RN-EST-001 | Orçamento enviado deve ser versionado quando alterado. | Alta | ✅ Trigger `version_and_supersede_estimate` (nenhuma policy de UPDATE de conteúdo para staff; desde `20260824020000` o próprio trigger também força `status = 'SENT'` no INSERT, fechando a brecha de staff criar um orçamento já `APPROVED`) + teste pgTAP (`0005_diagnostics_and_estimates.test.sql`) |
 | RN-EST-002 *(nova)* | Uma OS originada de um chamado só pode ser criada com um orçamento `APPROVED` para esse chamado. | Crítica | ✅ Trigger `enforce_work_order_requires_approved_estimate` + teste pgTAP |
 | RN-STK-001 | Saldo de estoque só muda por movimentação auditável. | Crítica | ⏳ Depende do módulo de estoque |
 | RN-FIN-001 | Pagamentos precisam ser idempotentes para evitar baixa duplicada. | Crítica | ⏳ Depende do módulo financeiro |
-| RN-SLA-001 | Cálculo do SLA é responsabilidade do backend. | Alta | ⏳ Depende do módulo de SLA |
+| RN-SLA-001 | Cálculo do SLA é responsabilidade do backend. | Alta | ✅ `due_at` carimbado por trigger na criação da OS; status derivado por `work_orders_sla_status()` (computed column) + teste pgTAP (`0006_appointments_and_sla.test.sql`) |
 | RN-AUD-001 | Operações críticas devem registrar usuário, data, antes e depois. | Alta | ⏳ Tabela `audit_logs` ainda não criada |
 
 Ao implementar qualquer regra marcada como pendente, siga o template de

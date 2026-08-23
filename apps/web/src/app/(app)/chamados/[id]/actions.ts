@@ -23,3 +23,15 @@ export async function decideEstimate(estimateId: string, decision: "APPROVED" | 
     revalidatePath(`/oficina/chamados/${estimate.service_request_id}`);
   }
 }
+
+export async function confirmAppointment(appointmentId: string, serviceRequestId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("appointments")
+    .update({ status: "CONFIRMED" })
+    .eq("id", appointmentId);
+
+  if (!error) {
+    revalidatePath(`/chamados/${serviceRequestId}`);
+  }
+}

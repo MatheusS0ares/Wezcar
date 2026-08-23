@@ -43,8 +43,9 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | vehicles (cadastro + histórico de quilometragem) | ✅ ETAPA 4 |
 | service-requests, work-orders (chamados + OS) | ✅ primeira fatia |
 | diagnostics, estimates/estimate-items (orçamento versionado) | ✅ segunda fatia |
+| appointments, sla (agenda + prazo de entrega) | ✅ terceira fatia |
 | customers, vehicle-life, maintenance | ⏳ |
-| appointments, sla, pickup-delivery | ⏳ |
+| pickup-delivery | ⏳ |
 | products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |
 | notifications, chat, reviews, reports, analytics | ⏳ |

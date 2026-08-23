@@ -284,6 +284,8 @@ export type Database = {
           completed_at: string | null;
           created_at: string;
           updated_at: string;
+          /** Computed column (function of the row type) — see work_orders_sla_status() in Functions below. */
+          work_orders_sla_status: string;
         };
         Insert: {
           id?: string;
@@ -461,6 +463,86 @@ export type Database = {
           },
         ];
       };
+      sla_definitions: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          default_hours: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          default_hours?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["sla_definitions"]["Insert"]>;
+        Relationships: [];
+      };
+      sla_instances: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          work_order_id: string;
+          due_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          work_order_id: string;
+          due_at: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["sla_instances"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "sla_instances_work_order_id_fkey";
+            columns: ["work_order_id"];
+            isOneToOne: true;
+            referencedRelation: "work_orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      appointments: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          work_order_id: string;
+          customer_id: string;
+          scheduled_at: string;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          work_order_id: string;
+          customer_id: string;
+          scheduled_at: string;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["appointments"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "appointments_work_order_id_fkey";
+            columns: ["work_order_id"];
+            isOneToOne: true;
+            referencedRelation: "work_orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -471,6 +553,10 @@ export type Database = {
       has_permission: {
         Args: { permission_code: string };
         Returns: boolean;
+      };
+      work_orders_sla_status: {
+        Args: { wo: Database["public"]["Tables"]["work_orders"]["Row"] };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;
@@ -490,9 +576,13 @@ export type PermissionCode =
   | "platform.super_admin"
   | "service_request.manage"
   | "diagnostic.manage"
-  | "estimate.manage";
+  | "estimate.manage"
+  | "appointment.manage"
+  | "sla.manage";
 
 export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
 export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";
 export type EstimateStatus = "SENT" | "APPROVED" | "REJECTED" | "SUPERSEDED";
 export type EstimateItemKind = "PART" | "LABOR";
+export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "DONE" | "CANCELED" | "NO_SHOW";
+export type SlaStatus = "NONE" | "ON_TRACK" | "AT_RISK" | "BREACHED" | "MET" | "MISSED" | "CANCELED";

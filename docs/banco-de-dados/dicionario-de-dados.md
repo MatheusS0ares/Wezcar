@@ -85,8 +85,8 @@ Catálogo global, formato de código `<módulo>.<ação>`.
 Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
 `vehicle.update`, `work_order.update`, `estimate.approve`,
 `platform.super_admin`, `service_request.manage`, `diagnostic.manage`,
-`estimate.manage`. Cada feature nova adiciona seus próprios códigos numa
-migration própria.
+`estimate.manage`, `appointment.manage`, `sla.manage`. Cada feature nova
+adiciona seus próprios códigos numa migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -272,13 +272,70 @@ para `authenticated`.
 | unit_price | NUMERIC(12,2) | Sim | — |
 | created_at | TIMESTAMPTZ | Sim | — |
 
+## SLA_DEFINITIONS
+
+Uma linha por tenant (`tenant_id` é `UNIQUE`): prazo padrão, em horas, que a
+oficina promete pra uma OS, contado a partir de `opened_at`. Sem linha
+configurada, o trigger que cria `sla_instances` usa 48h de fallback.
+Configurável pelo próprio staff (`sla.manage`) em `/oficina`.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina (único — uma configuração por tenant) |
+| default_hours | INT | Sim | Prazo padrão, em horas (`> 0`) |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## SLA_INSTANCES
+
+RN-SLA-001: cálculo do SLA é responsabilidade do backend. Uma linha por OS
+(`work_order_id` é `UNIQUE`), criada automaticamente pelo trigger
+`create_sla_instance_for_work_order` ao inserir a OS — `due_at` é carimbado
+uma única vez ali (lendo `sla_definitions` do tenant) e nunca mais alterado;
+sem `INSERT`/`UPDATE` para `authenticated`, só leitura.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina responsável |
+| work_order_id | UUID | Sim | FK → work_orders (único) |
+| due_at | TIMESTAMPTZ | Sim | Prazo prometido — `opened_at + default_hours` no momento da criação da OS |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+`public.work_orders_sla_status(wo work_orders) returns text` é uma
+**computed column** (convenção do PostgREST: função que recebe o tipo linha
+da própria tabela) exposta via `select=*,work_orders_sla_status` em
+`work_orders`. Deriva o status na leitura, sem guardar nada redundante:
+`NONE` (sem `sla_instances` — ex. OS criada antes deste módulo existir),
+`CANCELED`, `MET`/`MISSED` (já `DELIVERED`, comparando `completed_at` com
+`due_at`), `BREACHED` (`now() > due_at`), `AT_RISK` (`due_at` a menos de 4h)
+ou `ON_TRACK`.
+
+## APPOINTMENTS *(agenda)*
+
+Uma linha por OS (`work_order_id` é `UNIQUE`) — quando o veículo é esperado
+pra execução. Staff agenda (`appointment.manage`); cliente só pode confirmar
+a própria (`SCHEDULED` → `CONFIRMED`), nunca mudar o horário.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina responsável |
+| work_order_id | UUID | Sim | FK → work_orders (único) |
+| customer_id | UUID | Sim | FK → users (validado por trigger contra a OS) |
+| scheduled_at | TIMESTAMPTZ | Sim | Horário agendado |
+| status | VARCHAR(20) | Sim | `SCHEDULED` → `CONFIRMED`/`DONE`/`CANCELED`/`NO_SHOW` |
+| notes | TEXT | Não | — |
+| created_by | UUID | Não | Staff que agendou |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 `PLATFORM_ADMIN`) com as permissões `service_request.manage`,
-`work_order.update`, `diagnostic.manage` e `estimate.manage`. Atribuído
-manualmente via SQL a um usuário com `tenant_id` já definido (ver
-`docs/seguranca/rls-e-autenticacao.md`).
+`work_order.update`, `diagnostic.manage`, `estimate.manage`,
+`appointment.manage` e `sla.manage`. Atribuído manualmente via SQL a um
+usuário com `tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
 
 ## Funções auxiliares de RLS
 
@@ -286,9 +343,11 @@ manualmente via SQL a um usuário com `tenant_id` já definido (ver
 | --- | --- | --- |
 | `public.current_tenant_id()` | `uuid \| null` | Tenant do usuário autenticado atual |
 | `public.has_permission(code text)` | `boolean` | Se o usuário atual tem uma permissão, via `user_roles` → `role_permissions` → `permissions` |
+| `public.work_orders_sla_status(wo work_orders)` | `text` | Computed column — status do SLA de uma OS, derivado na leitura (ver SLA_INSTANCES acima) |
 
 ## Próximas tabelas
 
-`CUSTOMERS`, `appointments` (agenda), `sla_definitions`/`sla_instances` etc.
-entram quando as respectivas etapas do roadmap forem implementadas — ver a
-Especificação Técnica para o dicionário-alvo completo.
+`CUSTOMERS`, manutenções/documentos/fotos/garantias da Vida do Carro,
+estoque/compras/financeiro etc. entram quando as respectivas etapas do
+roadmap forem implementadas — ver a Especificação Técnica para o
+dicionário-alvo completo.

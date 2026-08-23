@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { decideEstimate } from "./actions";
+import { confirmAppointment, decideEstimate } from "./actions";
 
 const currency = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -36,7 +36,7 @@ export default async function ChamadoDetailPage({
     notFound();
   }
 
-  const [{ data: diagnostic }, { data: estimates }] = await Promise.all([
+  const [{ data: diagnostic }, { data: estimates }, { data: workOrder }] = await Promise.all([
     supabase.from("diagnostics").select("summary").eq("service_request_id", id).maybeSingle(),
     supabase
       .from("estimates")
@@ -45,6 +45,11 @@ export default async function ChamadoDetailPage({
       )
       .eq("service_request_id", id)
       .order("version", { ascending: false }),
+    supabase
+      .from("work_orders")
+      .select("id, status, sla_instances(due_at), appointments(id, scheduled_at, status)")
+      .eq("service_request_id", id)
+      .maybeSingle(),
   ]);
 
   const latestEstimate = estimates?.[0] ?? null;
@@ -132,6 +137,54 @@ export default async function ChamadoDetailPage({
         <p className="text-sm text-[var(--wz-text-secondary)]">
           A oficina aceitou o chamado — o orçamento aparece aqui assim que for enviado.
         </p>
+      )}
+
+      {workOrder && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[var(--wz-text-primary)]">Execução</h2>
+              <StatusBadge status={workOrder.status} />
+            </div>
+          </CardHeader>
+          <CardBody>
+            {workOrder.sla_instances?.due_at && (
+              <p className="text-sm text-[var(--wz-text-secondary)]">
+                Previsão de entrega:{" "}
+                <span className="font-medium text-[var(--wz-text-primary)]">
+                  {new Date(workOrder.sla_instances.due_at).toLocaleString("pt-BR")}
+                </span>
+              </p>
+            )}
+
+            {workOrder.appointments ? (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <p className="text-sm text-[var(--wz-text-secondary)]">
+                  Agendado para{" "}
+                  <span className="font-medium text-[var(--wz-text-primary)]">
+                    {new Date(workOrder.appointments.scheduled_at).toLocaleString("pt-BR")}
+                  </span>
+                </p>
+                <StatusBadge status={workOrder.appointments.status} />
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-[var(--wz-text-secondary)]">
+                A oficina ainda vai agendar o horário de execução.
+              </p>
+            )}
+
+            {workOrder.appointments?.status === "SCHEDULED" && (
+              <form
+                action={confirmAppointment.bind(null, workOrder.appointments.id, id)}
+                className="mt-3"
+              >
+                <Button type="submit" size="sm">
+                  Confirmar horário
+                </Button>
+              </form>
+            )}
+          </CardBody>
+        </Card>
       )}
 
       {olderVersions.length > 0 && (

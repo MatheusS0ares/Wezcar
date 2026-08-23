@@ -28,6 +28,16 @@ const STATUS_TONE: Record<string, Tone> = {
   BLOCKED: "danger",
   INACTIVE: "neutral",
   SUPERSEDED: "neutral",
+  SCHEDULED: "info",
+  CONFIRMED: "primary",
+  DONE: "success",
+  NO_SHOW: "danger",
+  ON_TRACK: "info",
+  AT_RISK: "warning",
+  BREACHED: "danger",
+  MET: "success",
+  MISSED: "danger",
+  NONE: "neutral",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {

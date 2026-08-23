@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 export async function acceptServiceRequest(id: string) {
@@ -73,4 +74,95 @@ export async function cancelWorkOrder(id: string) {
   await supabase.from("work_orders").update({ status: "CANCELED" }).eq("id", id);
   revalidatePath("/oficina/os");
   revalidatePath("/oficina");
+}
+
+const appointmentSchema = z.object({
+  workOrderId: z.uuid(),
+  scheduledAt: z.string().min(1, "Escolha data e horário."),
+});
+
+export async function createAppointment(_prevState: unknown, formData: FormData) {
+  const parsed = appointmentSchema.safeParse({
+    workOrderId: formData.get("workOrderId"),
+    scheduledAt: formData.get("scheduledAt"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const scheduledDate = new Date(parsed.data.scheduledAt);
+  if (Number.isNaN(scheduledDate.getTime())) {
+    return { error: "Data/horário inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: workOrder } = await supabase
+    .from("work_orders")
+    .select("tenant_id, customer_id")
+    .eq("id", parsed.data.workOrderId)
+    .single();
+
+  if (!workOrder) {
+    return { error: "OS não encontrada." };
+  }
+
+  const { error } = await supabase.from("appointments").insert({
+    tenant_id: workOrder.tenant_id,
+    work_order_id: parsed.data.workOrderId,
+    customer_id: workOrder.customer_id,
+    scheduled_at: scheduledDate.toISOString(),
+    created_by: user?.id ?? null,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/oficina/os");
+  return { success: "Execução agendada." };
+}
+
+const slaDefinitionSchema = z.object({
+  tenantId: z.uuid(),
+  defaultHours: z.coerce.number().int().positive("Informe um número de horas maior que zero."),
+});
+
+export async function updateSlaDefinition(_prevState: unknown, formData: FormData) {
+  const parsed = slaDefinitionSchema.safeParse({
+    tenantId: formData.get("tenantId"),
+    defaultHours: formData.get("defaultHours"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("sla_definitions")
+    .select("id")
+    .eq("tenant_id", parsed.data.tenantId)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase
+        .from("sla_definitions")
+        .update({ default_hours: parsed.data.defaultHours })
+        .eq("id", existing.id)
+    : await supabase.from("sla_definitions").insert({
+        tenant_id: parsed.data.tenantId,
+        default_hours: parsed.data.defaultHours,
+      });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/oficina");
+  return { success: "SLA padrão atualizado." };
 }

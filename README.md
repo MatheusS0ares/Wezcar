@@ -7,10 +7,10 @@ acompanhando a vida do veículo e a gestão da oficina. Este README cobre o que
 já foi construído: a **Fundação** (ETAPA 1-3 — repositório, banco
 multi-tenant no Supabase, autenticação), **ETAPA 4** (cadastro de veículo +
 histórico de quilometragem), a **Wezcar Oficina** (chamados, diagnóstico,
-orçamento versionado e ordens de serviço — Solicitação → Diagnóstico →
-Orçamento → Aprovação → OS), os papéis **PLATFORM_ADMIN** ("Wezcar Admin") e
-**WORKSHOP_ADMIN**, e um shell/design system inicial (`docs/decisoes/
-0003-design-system-shell.md`).
+orçamento versionado, agenda e SLA de entrega — Solicitação → Diagnóstico →
+Orçamento → Aprovação → OS → Agendamento), os papéis **PLATFORM_ADMIN**
+("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design system inicial
+(`docs/decisoes/0003-design-system-shell.md`).
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
@@ -84,13 +84,14 @@ pnpm dev
 Abra http://localhost:3000. `/cadastro` cria uma conta de cliente, `/entrar`
 faz login. Dentro da área autenticada: `/painel` (visão geral), `/veiculos`
 (cadastro + quilometragem), `/chamados` (cliente abre chamado para uma
-oficina e, uma vez aceito, acompanha diagnóstico/orçamento e aprova em
-`/chamados/[id]`), `/oficina` (dashboard + `/oficina/chamados` — aceitar,
-recusar e, em `/oficina/chamados/[id]`, registrar diagnóstico e enviar
-orçamento — + `/oficina/os` — só para quem tem o papel `WORKSHOP_ADMIN`) e
-`/admin` (Wezcar Admin, só para `PLATFORM_ADMIN`) — ver
-`docs/seguranca/rls-e-autenticacao.md` para como conceder esses papéis.
-`/api/health` verifica a conexão com o banco.
+oficina e, uma vez aceito, acompanha diagnóstico/orçamento/agendamento e
+aprova em `/chamados/[id]`), `/oficina` (dashboard com SLA em risco/estourado
++ configuração do SLA padrão + `/oficina/chamados` — aceitar, recusar e, em
+`/oficina/chamados/[id]`, registrar diagnóstico e enviar orçamento — +
+`/oficina/os` — agendar execução e ver o prazo de entrega de cada OS, só para
+quem tem o papel `WORKSHOP_ADMIN`) e `/admin` (Wezcar Admin, só para
+`PLATFORM_ADMIN`) — ver `docs/seguranca/rls-e-autenticacao.md` para como
+conceder esses papéis. `/api/health` verifica a conexão com o banco.
 
 ### Rodando os testes de banco (RLS / isolamento de tenant)
 

@@ -74,7 +74,7 @@ where u.email = 'seu-email@exemplo.com'
 
 Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
 nulo) com as permissões `service_request.manage`, `work_order.update`,
-`diagnostic.manage` e `estimate.manage`. Ao
+`diagnostic.manage`, `estimate.manage`, `appointment.manage` e `sla.manage`. Ao
 contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
 `tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
 policies de `service_requests`/`work_orders` (que exigem
@@ -141,6 +141,15 @@ Testes pgTAP em `supabase/tests/database/`:
   `REJECTED`) a versão que está `SENT`, nunca uma já superada; criar OS sem
   orçamento aprovado é rejeitado pelo trigger; com o orçamento aprovado, a OS
   é criada normalmente e referencia essa versão.
+- `0006_appointments_and_sla.test.sql` — RN-SLA-001: criar uma OS gera
+  automaticamente `sla_instances` com `due_at` calculado (fallback de 48h sem
+  `sla_definitions`, ou o valor configurado pelo tenant); `due_at` nunca é
+  recalculado depois; `work_orders_sla_status()` deriva `ON_TRACK`/
+  `AT_RISK`/`BREACHED`/`MET`/`MISSED` corretamente; app não escreve em
+  `sla_instances` diretamente; staff agenda a execução, trigger rejeita
+  agendamento com `customer_id` que não bate com o da OS; cliente vê e
+  confirma o próprio agendamento mas não consegue mudar o horário; staff de
+  outra oficina não vê nada.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de
