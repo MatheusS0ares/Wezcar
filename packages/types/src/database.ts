@@ -543,6 +543,101 @@ export type Database = {
           },
         ];
       };
+      maintenance_records: {
+        Row: {
+          id: string;
+          vehicle_id: string;
+          tenant_id: string | null;
+          work_order_id: string | null;
+          source: string;
+          description: string;
+          mileage: number | null;
+          cost: number | null;
+          performed_at: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id: string;
+          tenant_id?: string | null;
+          work_order_id?: string | null;
+          source: string;
+          description: string;
+          mileage?: number | null;
+          cost?: number | null;
+          performed_at?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["maintenance_records"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_records_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      warranty_definitions: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          default_months: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          default_months?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["warranty_definitions"]["Insert"]>;
+        Relationships: [];
+      };
+      warranties: {
+        Row: {
+          id: string;
+          vehicle_id: string;
+          tenant_id: string;
+          work_order_id: string;
+          maintenance_record_id: string | null;
+          description: string;
+          expires_at: string;
+          created_at: string;
+          /** Computed column (function of the row type) — see warranties_status() in Functions below. */
+          warranties_status: string;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id: string;
+          tenant_id: string;
+          work_order_id: string;
+          maintenance_record_id?: string | null;
+          description: string;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["warranties"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "warranties_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "warranties_work_order_id_fkey";
+            columns: ["work_order_id"];
+            isOneToOne: true;
+            referencedRelation: "work_orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -556,6 +651,10 @@ export type Database = {
       };
       work_orders_sla_status: {
         Args: { wo: Database["public"]["Tables"]["work_orders"]["Row"] };
+        Returns: string;
+      };
+      warranties_status: {
+        Args: { w: Database["public"]["Tables"]["warranties"]["Row"] };
         Returns: string;
       };
     };
@@ -578,7 +677,8 @@ export type PermissionCode =
   | "diagnostic.manage"
   | "estimate.manage"
   | "appointment.manage"
-  | "sla.manage";
+  | "sla.manage"
+  | "warranty.manage";
 
 export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
 export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";
@@ -586,3 +686,5 @@ export type EstimateStatus = "SENT" | "APPROVED" | "REJECTED" | "SUPERSEDED";
 export type EstimateItemKind = "PART" | "LABOR";
 export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "DONE" | "CANCELED" | "NO_SHOW";
 export type SlaStatus = "NONE" | "ON_TRACK" | "AT_RISK" | "BREACHED" | "MET" | "MISSED" | "CANCELED";
+export type MaintenanceSource = "WORK_ORDER" | "MANUAL";
+export type WarrantyStatus = "ACTIVE" | "EXPIRED";

@@ -85,8 +85,8 @@ Catálogo global, formato de código `<módulo>.<ação>`.
 Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
 `vehicle.update`, `work_order.update`, `estimate.approve`,
 `platform.super_admin`, `service_request.manage`, `diagnostic.manage`,
-`estimate.manage`, `appointment.manage`, `sla.manage`. Cada feature nova
-adiciona seus próprios códigos numa migration própria.
+`estimate.manage`, `appointment.manage`, `sla.manage`, `warranty.manage`.
+Cada feature nova adiciona seus próprios códigos numa migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -329,13 +329,83 @@ a própria (`SCHEDULED` → `CONFIRMED`), nunca mudar o horário.
 | created_by | UUID | Não | Staff que agendou |
 | created_at / updated_at | TIMESTAMPTZ | Sim | — |
 
+## MAINTENANCE_RECORDS *(Vida do Carro)*
+
+Fato imutável do veículo (ADR 0004, princípio 2) — mesmo padrão de
+`vehicle_mileage_history`/`work_order_events`: só inserção, nunca editado ou
+apagado. Pertence ao **veículo** (`vehicle_id`), não a um tenant — `tenant_id`
+só existe como metadado de quem prestou o serviço numa linha `WORK_ORDER`. Se
+o motorista trocar de oficina, o histórico continua com ele.
+
+Duas origens:
+- `WORK_ORDER` — criada automaticamente por
+  `create_maintenance_record_from_work_order()` quando uma OS chega a
+  `DELIVERED` (descrição composta a partir dos itens do orçamento, custo =
+  soma dos itens, quilometragem = a do veículo no momento). Nunca inserida
+  direto pelo app.
+- `MANUAL` — o próprio dono do veículo registra uma manutenção feita fora da
+  Wezcar. RLS garante `tenant_id`/`work_order_id` nulos nesse caso — um
+  cliente não consegue forjar uma linha `WORK_ORDER` "verificada".
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| vehicle_id | UUID | Sim | FK → vehicles |
+| tenant_id | UUID | Não | Oficina que prestou o serviço (nulo em registros `MANUAL`) |
+| work_order_id | UUID | Não | FK → work_orders (nulo em registros `MANUAL`) |
+| source | VARCHAR(20) | Sim | `WORK_ORDER` \| `MANUAL` |
+| description | TEXT | Sim | — |
+| mileage | INT | Não | Quilometragem no momento do serviço |
+| cost | NUMERIC(12,2) | Não | — |
+| performed_at | TIMESTAMPTZ | Sim | Quando o serviço foi feito |
+| created_by | UUID | Não | Quem registrou (nulo em registros automáticos) |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+## WARRANTY_DEFINITIONS
+
+Uma linha por tenant (`tenant_id` é `UNIQUE`): prazo padrão de garantia, em
+meses, pra uma OS entregue. Sem linha configurada, o trigger que cria
+`warranties` usa 3 meses de fallback. Configurável pelo staff
+(`warranty.manage`).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina (único) |
+| default_months | INT | Sim | Prazo padrão, em meses (`> 0`) |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## WARRANTIES
+
+Uma linha por OS (`work_order_id` é `UNIQUE`), criada automaticamente por
+`create_warranty_from_work_order()` no mesmo momento que o registro de
+manutenção (`DELIVERED`) — `expires_at` é carimbado uma única vez e nunca
+recalculado; sem `INSERT`/`UPDATE` para `authenticated`.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| vehicle_id | UUID | Sim | FK → vehicles |
+| tenant_id | UUID | Sim | Oficina responsável |
+| work_order_id | UUID | Sim | FK → work_orders (único) |
+| maintenance_record_id | UUID | Não | Registro de manutenção correspondente |
+| description | TEXT | Sim | — |
+| expires_at | TIMESTAMPTZ | Sim | `now() + default_months` no momento da entrega |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+`public.warranties_status(w warranties) returns text` é uma **computed
+column** (mesmo padrão de `work_orders_sla_status`), exposta via
+`select=*,warranties_status`: `ACTIVE` ou `EXPIRED`, derivado de
+`expires_at` na leitura.
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 `PLATFORM_ADMIN`) com as permissões `service_request.manage`,
 `work_order.update`, `diagnostic.manage`, `estimate.manage`,
-`appointment.manage` e `sla.manage`. Atribuído manualmente via SQL a um
-usuário com `tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
+`appointment.manage`, `sla.manage` e `warranty.manage`. Atribuído
+manualmente via SQL a um usuário com `tenant_id` já definido (ver
+`docs/seguranca/rls-e-autenticacao.md`).
 
 ## Funções auxiliares de RLS
 
@@ -344,10 +414,11 @@ usuário com `tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md
 | `public.current_tenant_id()` | `uuid \| null` | Tenant do usuário autenticado atual |
 | `public.has_permission(code text)` | `boolean` | Se o usuário atual tem uma permissão, via `user_roles` → `role_permissions` → `permissions` |
 | `public.work_orders_sla_status(wo work_orders)` | `text` | Computed column — status do SLA de uma OS, derivado na leitura (ver SLA_INSTANCES acima) |
+| `public.warranties_status(w warranties)` | `text` | Computed column — `ACTIVE`/`EXPIRED`, derivado de `expires_at` na leitura |
 
 ## Próximas tabelas
 
-`CUSTOMERS`, manutenções/documentos/fotos/garantias da Vida do Carro,
-estoque/compras/financeiro etc. entram quando as respectivas etapas do
-roadmap forem implementadas — ver a Especificação Técnica para o
+`CUSTOMERS`, documentos/fotos da Vida do Carro (dependem de Supabase
+Storage), estoque/compras/financeiro etc. entram quando as respectivas
+etapas do roadmap forem implementadas — ver a Especificação Técnica para o
 dicionário-alvo completo.

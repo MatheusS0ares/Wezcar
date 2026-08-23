@@ -44,7 +44,9 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | service-requests, work-orders (chamados + OS) | ✅ primeira fatia |
 | diagnostics, estimates/estimate-items (orçamento versionado) | ✅ segunda fatia |
 | appointments, sla (agenda + prazo de entrega) | ✅ terceira fatia |
-| customers, vehicle-life, maintenance | ⏳ |
+| vehicle-life, maintenance, warranty (histórico + garantias) | ✅ quarta fatia |
+| customers | ⏳ |
+| vehicle-life: documentos, fotos (dependem de Supabase Storage) | ⏳ |
 | pickup-delivery | ⏳ |
 | products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |

@@ -74,7 +74,8 @@ where u.email = 'seu-email@exemplo.com'
 
 Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
 nulo) com as permissões `service_request.manage`, `work_order.update`,
-`diagnostic.manage`, `estimate.manage`, `appointment.manage` e `sla.manage`. Ao
+`diagnostic.manage`, `estimate.manage`, `appointment.manage`, `sla.manage`
+e `warranty.manage`. Ao
 contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
 `tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
 policies de `service_requests`/`work_orders` (que exigem
@@ -149,6 +150,15 @@ Testes pgTAP em `supabase/tests/database/`:
   `sla_instances` diretamente; staff agenda a execução, trigger rejeita
   agendamento com `customer_id` que não bate com o da OS; cliente vê e
   confirma o próprio agendamento mas não consegue mudar o horário; staff de
+  outra oficina não vê nada.
+- `0007_maintenance_and_warranties.test.sql` — RN-VLC-001: entregar uma OS
+  (`DELIVERED`) gera automaticamente 1 registro de manutenção (descrição e
+  custo compostos a partir dos itens do orçamento, quilometragem do veículo
+  no momento) e 1 garantia; passar por `IN_PROGRESS`/`READY` ainda não gera
+  nada; o dono do veículo vê o histórico e consegue registrar manutenção
+  `MANUAL` (feita fora da Wezcar), mas a RLS rejeita uma tentativa de inserir
+  diretamente uma linha `WORK_ORDER` "forjada"; staff da oficina que atendeu
+  vê o registro automático mas não a manutenção `MANUAL` do cliente; staff de
   outra oficina não vê nada.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet

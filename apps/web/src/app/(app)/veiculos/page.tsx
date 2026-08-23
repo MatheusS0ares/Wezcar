@@ -1,4 +1,5 @@
 import { Car } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getNavContext } from "@/lib/nav";
@@ -41,10 +42,13 @@ export default async function VeiculosPage() {
             <Card key={vehicle.id}>
               <CardBody>
                 <div className="flex items-baseline justify-between">
-                  <h3 className="font-medium text-[var(--wz-text-primary)]">
+                  <Link
+                    href={`/veiculos/${vehicle.id}`}
+                    className="font-medium text-[var(--wz-text-primary)] hover:text-[var(--wz-primary)]"
+                  >
                     {vehicle.brand} {vehicle.model}
                     {vehicle.manufacture_year ? ` (${vehicle.manufacture_year})` : ""}
-                  </h3>
+                  </Link>
                   {vehicle.plate && (
                     <span className="text-xs uppercase tracking-wide text-[var(--wz-text-secondary)]">
                       {vehicle.plate}
@@ -57,6 +61,12 @@ export default async function VeiculosPage() {
                     : "Quilometragem não informada"}
                 </p>
                 <MileageForm vehicleId={vehicle.id} currentMileage={vehicle.mileage} />
+                <Link
+                  href={`/veiculos/${vehicle.id}`}
+                  className="mt-2 inline-block text-xs font-medium text-[var(--wz-primary)] hover:underline"
+                >
+                  Ver histórico e garantias
+                </Link>
               </CardBody>
             </Card>
           ))

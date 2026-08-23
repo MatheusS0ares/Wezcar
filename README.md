@@ -8,9 +8,11 @@ já foi construído: a **Fundação** (ETAPA 1-3 — repositório, banco
 multi-tenant no Supabase, autenticação), **ETAPA 4** (cadastro de veículo +
 histórico de quilometragem), a **Wezcar Oficina** (chamados, diagnóstico,
 orçamento versionado, agenda e SLA de entrega — Solicitação → Diagnóstico →
-Orçamento → Aprovação → OS → Agendamento), os papéis **PLATFORM_ADMIN**
-("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design system inicial
-(`docs/decisoes/0003-design-system-shell.md`).
+Orçamento → Aprovação → OS → Agendamento), a **Vida do Carro** (uma OS
+entregue vira automaticamente histórico de manutenção + garantia, e o
+motorista também registra manutenções feitas fora da Wezcar), os papéis
+**PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design
+system inicial (`docs/decisoes/0003-design-system-shell.md`).
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
@@ -83,9 +85,11 @@ pnpm dev
 
 Abra http://localhost:3000. `/cadastro` cria uma conta de cliente, `/entrar`
 faz login. Dentro da área autenticada: `/painel` (visão geral), `/veiculos`
-(cadastro + quilometragem), `/chamados` (cliente abre chamado para uma
-oficina e, uma vez aceito, acompanha diagnóstico/orçamento/agendamento e
-aprova em `/chamados/[id]`), `/oficina` (dashboard com SLA em risco/estourado
+(cadastro + quilometragem, com link pra `/veiculos/[id]` — a Vida do Carro:
+histórico de manutenções, garantias e registro manual de serviço feito fora
+da Wezcar), `/chamados` (cliente abre chamado para uma oficina e, uma vez
+aceito, acompanha diagnóstico/orçamento/agendamento e aprova em
+`/chamados/[id]`), `/oficina` (dashboard com SLA em risco/estourado
 + configuração do SLA padrão + `/oficina/chamados` — aceitar, recusar e, em
 `/oficina/chamados/[id]`, registrar diagnóstico e enviar orçamento — +
 `/oficina/os` — agendar execução e ver o prazo de entrega de cada OS, só para
