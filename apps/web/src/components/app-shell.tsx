@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Car, Home, LogOut, ShieldCheck, Warehouse, Wrench } from "lucide-react";
 import { logout } from "@/app/entrar/actions";
+import { NotificationBell, type NotificationItem } from "@/components/notification-bell";
 
 // A Server Component can't pass a component *reference* (e.g. the Home icon itself) as a
 // prop to a Client Component — only serializable data. So the layout passes an icon *key*,
@@ -21,10 +22,12 @@ export type NavItem = {
 export function AppShell({
   user,
   navItems,
+  notifications,
   children,
 }: {
   user: { name: string; email: string };
   navItems: NavItem[];
+  notifications: NotificationItem[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -36,11 +39,14 @@ export function AppShell({
     <div className="flex min-h-dvh flex-col md:flex-row">
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex md:w-60 md:flex-shrink-0 md:flex-col md:border-r md:border-[var(--wz-border)] md:bg-[var(--wz-surface)]">
-        <div className="flex items-center gap-2 px-5 py-5">
-          <Image src="/wezcar-icon.png" alt="" width={36} height={19} />
-          <span className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
-            Wezcar
-          </span>
+        <div className="flex items-center justify-between px-5 py-5">
+          <div className="flex items-center gap-2">
+            <Image src="/wezcar-icon.png" alt="" width={36} height={19} />
+            <span className="text-sm font-semibold uppercase tracking-wide text-[var(--wz-cyan)]">
+              Wezcar
+            </span>
+          </div>
+          <NotificationBell notifications={notifications} align="left" />
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {navItems.map((item) => {
@@ -86,31 +92,34 @@ export function AppShell({
               Wezcar
             </span>
           </div>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--wz-primary)]/15 text-sm font-semibold text-[var(--wz-primary)]"
-              aria-label="Menu do usuário"
-            >
-              {user.name.charAt(0).toUpperCase()}
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-[var(--wz-border)] bg-[var(--wz-surface)] p-3 shadow-lg">
-                <p className="truncate text-sm font-medium text-[var(--wz-text-primary)]">
-                  {user.name}
-                </p>
-                <p className="truncate text-xs text-[var(--wz-text-secondary)]">{user.email}</p>
-                <form action={logout} className="mt-3">
-                  <button
-                    type="submit"
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-[var(--wz-text-secondary)] hover:bg-[var(--wz-background)]"
-                  >
-                    <LogOut className="h-4 w-4" /> Sair
-                  </button>
-                </form>
-              </div>
-            )}
+          <div className="flex items-center gap-1">
+            <NotificationBell notifications={notifications} />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--wz-primary)]/15 text-sm font-semibold text-[var(--wz-primary)]"
+                aria-label="Menu do usuário"
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-[var(--wz-border)] bg-[var(--wz-surface)] p-3 shadow-lg">
+                  <p className="truncate text-sm font-medium text-[var(--wz-text-primary)]">
+                    {user.name}
+                  </p>
+                  <p className="truncate text-xs text-[var(--wz-text-secondary)]">{user.email}</p>
+                  <form action={logout} className="mt-3">
+                    <button
+                      type="submit"
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-[var(--wz-text-secondary)] hover:bg-[var(--wz-background)]"
+                    >
+                      <LogOut className="h-4 w-4" /> Sair
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

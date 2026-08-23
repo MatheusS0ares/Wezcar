@@ -581,6 +581,26 @@ racional de quais tabelas e por quê.
 | after | JSONB | Não | Linha depois da mudança (`null` em `DELETE`) |
 | created_at | TIMESTAMPTZ | Sim | — |
 
+## NOTIFICATIONS
+
+RN-NOT-001: cliente e oficina precisam ser avisados quando um evento-chave
+do fluxo acontece. Uma linha por destinatário (não por evento), escrita
+exclusivamente pelos triggers de domínio (`SECURITY DEFINER`) listados em
+`docs/seguranca/rls-e-autenticacao.md` — `authenticated` só tem
+`GRANT SELECT, UPDATE` (marcar como lida a própria notificação).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| user_id | UUID | Sim | Destinatário |
+| tenant_id | UUID | Não | Oficina relacionada ao evento (informativo) |
+| type | VARCHAR(40) | Sim | `SERVICE_REQUEST_OPENED` \| `ESTIMATE_SENT` \| `ESTIMATE_DECIDED` \| `WORK_ORDER_READY` \| `WORK_ORDER_DELIVERED` \| `APPOINTMENT_CONFIRMED` |
+| title | VARCHAR(150) | Sim | — |
+| body | TEXT | Não | — |
+| link | TEXT | Não | Caminho pra navegar ao clicar |
+| read_at | TIMESTAMPTZ | Não | `null` = não lida |
+| created_at | TIMESTAMPTZ | Sim | — |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e

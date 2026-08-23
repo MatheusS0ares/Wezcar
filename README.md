@@ -14,9 +14,12 @@ motorista também registra manutenções feitas fora da Wezcar), **Estoque e
 Compras** (catálogo de peças, entrada por compra recebida, saída automática
 quando uma OS com item vinculado a um produto é entregue), **Financeiro**
 (OS entregue vira conta a receber, compra recebida vira conta a pagar,
-pagamentos idempotentes) e **Auditoria** (`audit_logs` — trigger genérica
+pagamentos idempotentes), **Auditoria** (`audit_logs` — trigger genérica
 registra usuário, data, antes e depois em operações críticas de
-configuração/privilégio: tenants, papéis, SLA, garantia), os papéis
+configuração/privilégio: tenants, papéis, SLA, garantia) e
+**Notificações** (`notifications` — chamado aberto, orçamento enviado/
+decidido, OS pronta/entregue e agendamento confirmado avisam
+automaticamente cliente ou staff, com sino no shell), os papéis
 **PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design
 system inicial (`docs/decisoes/0003-design-system-shell.md`).
 

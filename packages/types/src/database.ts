@@ -947,6 +947,45 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          tenant_id: string | null;
+          type: string;
+          title: string;
+          body: string | null;
+          link: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tenant_id?: string | null;
+          type: string;
+          title: string;
+          body?: string | null;
+          link?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1005,3 +1044,10 @@ export type InventoryMovementType = "PURCHASE" | "USAGE" | "ADJUSTMENT" | "RETUR
 export type AccountStatus = "OPEN" | "PAID" | "CANCELED";
 export type PaymentMethod = "PIX" | "CARD" | "CASH" | "TRANSFER" | "OTHER";
 export type AuditAction = "INSERT" | "UPDATE" | "DELETE";
+export type NotificationType =
+  | "SERVICE_REQUEST_OPENED"
+  | "ESTIMATE_SENT"
+  | "ESTIMATE_DECIDED"
+  | "WORK_ORDER_READY"
+  | "WORK_ORDER_DELIVERED"
+  | "APPOINTMENT_CONFIRMED";

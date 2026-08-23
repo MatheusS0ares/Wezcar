@@ -144,6 +144,39 @@ Policy de `SELECT`: staff do próprio tenant (`tenant_id = current_tenant_id()`)
 ou `platform.super_admin`. Viewer somente-leitura em `/admin/auditoria`
 (gated por `PLATFORM_ADMIN`, mesmo padrão de `/admin`).
 
+## Notificações (RN-NOT-001)
+
+RN-NOT-001: cliente e oficina precisam ser avisados quando um evento-chave
+do fluxo já existente acontece — hoje o app não notifica ninguém, cada um
+só descobre entrando e olhando a tela. Mesmo padrão de `audit_logs`: uma
+tabela genérica (`notifications`) escrita exclusivamente por triggers de
+domínio (`SECURITY DEFINER`), nenhum evento novo é criado, só um aviso
+sobre os que já existem.
+
+Diferença chave de `audit_logs`: aqui a linha é por **destinatário**, não
+por evento. Um "chamado aberto" é da oficina, não de uma pessoa — o helper
+`notify_tenant_staff()` faz fan-out (uma linha por membro do staff com
+papel `WORKSHOP_ADMIN` naquele tenant); um "orçamento enviado" é só do
+cliente daquele chamado — o helper `notify_user()` insere uma única linha.
+
+Eventos cobertos hoje:
+
+| Evento | Trigger | Destinatário |
+| --- | --- | --- |
+| Chamado aberto | `service_requests` `INSERT` | staff da oficina (fan-out) |
+| Orçamento enviado (toda inserção já nasce `SENT`) | `estimates` `INSERT` | cliente do chamado |
+| Orçamento aprovado/rejeitado | `estimates` `UPDATE` → `APPROVED`/`REJECTED` | staff da oficina (fan-out) |
+| OS pronta | `work_orders` `UPDATE` → `READY` | cliente do chamado |
+| OS entregue | `work_orders` `UPDATE` → `DELIVERED` | cliente do chamado |
+| Agendamento confirmado pelo cliente | `appointments` `UPDATE` → `CONFIRMED` | staff da oficina (fan-out) |
+
+`authenticated` só tem `GRANT SELECT, UPDATE` — nunca `INSERT`/`DELETE`; só
+os triggers escrevem. Policy de `SELECT`/`UPDATE`: `user_id = auth.uid()`
+(cada um só vê/marca como lida a própria notificação). Sino no shell
+(`apps/web/src/components/notification-bell.tsx`), alimentado pelas
+últimas 20 notificações buscadas em `(app)/layout.tsx` a cada navegação —
+sem realtime nesta fase, mesma limitação de todo o app.
+
 ## Testes
 
 Testes pgTAP em `supabase/tests/database/`:
@@ -219,6 +252,14 @@ Testes pgTAP em `supabase/tests/database/`:
   `PLATFORM_ADMIN`; alterar `sla_definitions` (tem `tenant_id`) gera
   auditoria visível ao staff daquele tenant, não ao de outro; `authenticated`
   não consegue inserir em `audit_logs` diretamente (só a trigger escreve).
+- `0011_notifications.test.sql` — RN-NOT-001: abrir um chamado notifica cada
+  membro do staff da oficina; orçamento enviado notifica o cliente; orçamento
+  aprovado notifica o staff; OS pronta e OS entregue notificam o cliente
+  (dois eventos distintos); cliente confirmar o agendamento notifica o
+  staff; `authenticated` não consegue inserir em `notifications` diretamente;
+  cliente marca a própria notificação como lida, mas não a de outro usuário
+  (RLS bloqueia — `UPDATE` afeta 0 linhas); staff de outra oficina não vê
+  nada disso.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de
