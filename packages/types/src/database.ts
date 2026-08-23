@@ -795,6 +795,117 @@ export type Database = {
           },
         ];
       };
+      accounts_receivable: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          customer_id: string;
+          work_order_id: string;
+          amount: number;
+          paid_amount: number;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          customer_id: string;
+          work_order_id: string;
+          amount: number;
+          paid_amount?: number;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["accounts_receivable"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "accounts_receivable_work_order_id_fkey";
+            columns: ["work_order_id"];
+            isOneToOne: true;
+            referencedRelation: "work_orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      accounts_payable: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          supplier_id: string | null;
+          purchase_id: string;
+          amount: number;
+          paid_amount: number;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          supplier_id?: string | null;
+          purchase_id: string;
+          amount: number;
+          paid_amount?: number;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["accounts_payable"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "accounts_payable_purchase_id_fkey";
+            columns: ["purchase_id"];
+            isOneToOne: true;
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "accounts_payable_supplier_id_fkey";
+            columns: ["supplier_id"];
+            referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payments: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          receivable_id: string | null;
+          payable_id: string | null;
+          amount: number;
+          method: string;
+          idempotency_key: string;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          receivable_id?: string | null;
+          payable_id?: string | null;
+          amount: number;
+          method: string;
+          idempotency_key: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "payments_receivable_id_fkey";
+            columns: ["receivable_id"];
+            referencedRelation: "accounts_receivable";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_payable_id_fkey";
+            columns: ["payable_id"];
+            referencedRelation: "accounts_payable";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -837,7 +948,8 @@ export type PermissionCode =
   | "sla.manage"
   | "warranty.manage"
   | "product.manage"
-  | "purchase.manage";
+  | "purchase.manage"
+  | "financial.manage";
 
 export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
 export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";
@@ -849,3 +961,5 @@ export type MaintenanceSource = "WORK_ORDER" | "MANUAL";
 export type WarrantyStatus = "ACTIVE" | "EXPIRED";
 export type PurchaseStatus = "DRAFT" | "ORDERED" | "RECEIVED" | "CANCELED";
 export type InventoryMovementType = "PURCHASE" | "USAGE" | "ADJUSTMENT" | "RETURN";
+export type AccountStatus = "OPEN" | "PAID" | "CANCELED";
+export type PaymentMethod = "PIX" | "CARD" | "CASH" | "TRANSFER" | "OTHER";

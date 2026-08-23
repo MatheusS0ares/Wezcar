@@ -75,7 +75,8 @@ where u.email = 'seu-email@exemplo.com'
 Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
 nulo) com as permissões `service_request.manage`, `work_order.update`,
 `diagnostic.manage`, `estimate.manage`, `appointment.manage`, `sla.manage`,
-`warranty.manage`, `product.manage` e `purchase.manage`. Ao
+`warranty.manage`, `product.manage`, `purchase.manage` e
+`financial.manage`. Ao
 contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
 `tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
 policies de `service_requests`/`work_orders` (que exigem
@@ -169,6 +170,15 @@ Testes pgTAP em `supabase/tests/database/`:
   produto e entregar a OS consome a quantidade do estoque automaticamente;
   trigger rejeita item de orçamento com produto de outra oficina; staff de
   outra oficina não vê produtos/fornecedores/compras/movimentações alheias.
+- `0009_financial_accounts.test.sql` — RN-FIN-001: entregar uma OS gera
+  automaticamente 1 conta a receber (valor = soma dos itens do orçamento);
+  receber uma compra gera automaticamente 1 conta a pagar (valor = soma dos
+  itens); pagamento parcial atualiza `paid_amount` sem quitar; reenviar o
+  mesmo `idempotency_key` é rejeitado pela unique constraint — não duplica a
+  baixa; completar o valor marca a conta como `PAID` automaticamente;
+  cliente vê a própria conta a receber e os pagamentos ligados a ela, mas
+  não consegue inserir um pagamento nem ver contas a pagar (são internas da
+  oficina); staff de outra oficina não vê nada disso.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de

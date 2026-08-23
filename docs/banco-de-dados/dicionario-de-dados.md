@@ -86,8 +86,8 @@ Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
 `vehicle.update`, `work_order.update`, `estimate.approve`,
 `platform.super_admin`, `service_request.manage`, `diagnostic.manage`,
 `estimate.manage`, `appointment.manage`, `sla.manage`, `warranty.manage`,
-`product.manage`, `purchase.manage`. Cada feature nova adiciona seus
-próprios códigos numa migration própria.
+`product.manage`, `purchase.manage`, `financial.manage`. Cada feature nova
+adiciona seus próprios códigos numa migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -495,14 +495,76 @@ item e atualiza `products.unit_cost` com o custo pago — e carimba
 | quantity | INT | Sim | `> 0` |
 | unit_cost | NUMERIC(12,2) | Sim | `>= 0` |
 
+## ACCOUNTS_RECEIVABLE / ACCOUNTS_PAYABLE
+
+Uma conta a receber por OS entregue (`create_receivable_from_work_order()`,
+valor = soma dos itens do orçamento) e uma conta a pagar por compra
+recebida (`create_payable_from_purchase()`, valor = soma dos itens da
+compra) — nunca criadas direto pelo app. `paid_amount`/`status` são caches
+mantidos por `sync_payment_balance()` a partir de `payments`; sem `UPDATE`
+para `authenticated` nas duas tabelas.
+
+**ACCOUNTS_RECEIVABLE**
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| customer_id | UUID | Sim | FK → users (cliente que deve) |
+| work_order_id | UUID | Sim | FK → work_orders (único) |
+| amount | NUMERIC(12,2) | Sim | Valor total (soma dos itens do orçamento) |
+| paid_amount | NUMERIC(12,2) | Sim | Cache — soma dos `payments` |
+| status | VARCHAR(20) | Sim | `OPEN` → `PAID`/`CANCELED` |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+**ACCOUNTS_PAYABLE**
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| supplier_id | UUID | Não | FK → suppliers |
+| purchase_id | UUID | Sim | FK → purchases (único) |
+| amount | NUMERIC(12,2) | Sim | Valor total (soma dos itens da compra) |
+| paid_amount | NUMERIC(12,2) | Sim | Cache — soma dos `payments` |
+| status | VARCHAR(20) | Sim | `OPEN` → `PAID`/`CANCELED` |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+Cliente enxerga a própria `accounts_receivable` (e os `payments` ligados a
+ela) — mas nunca `accounts_payable`, que é informação interna da oficina.
+
+## PAYMENTS
+
+RN-FIN-001: pagamentos precisam ser idempotentes pra evitar baixa
+duplicada. Livro-razão append-only — `idempotency_key` é único por tenant
+(`payments_tenant_idempotency_key_unique`); o app gera essa chave uma vez
+por carregamento da tela de Financeiro (`crypto.randomUUID()` no Server
+Component), não por clique, então reenviar o mesmo formulário (duplo-clique,
+retry de rede) esbarra na unique constraint em vez de registrar uma segunda
+baixa. Só staff com `financial.manage` insere, e só contra uma conta da
+própria oficina — cliente nunca registra pagamento diretamente.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| receivable_id | UUID | Não | FK → accounts_receivable (exatamente um dos dois é preenchido) |
+| payable_id | UUID | Não | FK → accounts_payable |
+| amount | NUMERIC(12,2) | Sim | `> 0` |
+| method | VARCHAR(20) | Sim | `PIX` \| `CARD` \| `CASH` \| `TRANSFER` \| `OTHER` |
+| idempotency_key | TEXT | Sim | Único por tenant |
+| notes | TEXT | Não | — |
+| created_by | UUID | Não | — |
+| created_at | TIMESTAMPTZ | Sim | — |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 `PLATFORM_ADMIN`) com as permissões `service_request.manage`,
 `work_order.update`, `diagnostic.manage`, `estimate.manage`,
-`appointment.manage`, `sla.manage`, `warranty.manage`, `product.manage` e
-`purchase.manage`. Atribuído manualmente via SQL a um usuário com
-`tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
+`appointment.manage`, `sla.manage`, `warranty.manage`, `product.manage`,
+`purchase.manage` e `financial.manage`. Atribuído manualmente via SQL a um
+usuário com `tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
 
 ## Funções auxiliares de RLS
 
@@ -516,6 +578,6 @@ Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 ## Próximas tabelas
 
 `CUSTOMERS`, documentos/fotos da Vida do Carro (dependem de Supabase
-Storage), financeiro etc. entram quando as respectivas
+Storage), fiscal, DRE/controladoria etc. entram quando as respectivas
 etapas do roadmap forem implementadas — ver a Especificação Técnica para o
 dicionário-alvo completo.

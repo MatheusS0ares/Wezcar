@@ -12,9 +12,11 @@ Orçamento → Aprovação → OS → Agendamento), a **Vida do Carro** (uma OS
 entregue vira automaticamente histórico de manutenção + garantia, e o
 motorista também registra manutenções feitas fora da Wezcar), **Estoque e
 Compras** (catálogo de peças, entrada por compra recebida, saída automática
-quando uma OS com item vinculado a um produto é entregue), os papéis
-**PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design
-system inicial (`docs/decisoes/0003-design-system-shell.md`).
+quando uma OS com item vinculado a um produto é entregue) e **Financeiro**
+(OS entregue vira conta a receber, compra recebida vira conta a pagar,
+pagamentos idempotentes), os papéis **PLATFORM_ADMIN** ("Wezcar Admin") e
+**WORKSHOP_ADMIN**, e um shell/design system inicial (`docs/decisoes/
+0003-design-system-shell.md`).
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
@@ -96,7 +98,8 @@ aceito, acompanha diagnóstico/orçamento/agendamento e aprova em
 `/oficina/chamados/[id]`, registrar diagnóstico e enviar orçamento — +
 `/oficina/os` — agendar execução e ver o prazo de entrega de cada OS — +
 `/oficina/estoque` — catálogo de produtos e ajuste de saldo +
-`/oficina/estoque/compras` — fornecedores e recebimento de compras, só para
+`/oficina/estoque/compras` — fornecedores e recebimento de compras +
+`/oficina/financeiro` — contas a receber/pagar e registro de pagamento, só para
 quem tem o papel `WORKSHOP_ADMIN`) e `/admin` (Wezcar Admin, só para
 `PLATFORM_ADMIN`) — ver `docs/seguranca/rls-e-autenticacao.md` para como
 conceder esses papéis. `/api/health` verifica a conexão com o banco.
