@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Bell,
   Car,
+  CheckCircle2,
   ClipboardCheck,
   Landmark,
   Lock,
@@ -13,7 +14,18 @@ import {
 } from "lucide-react";
 import { LandingNavbar } from "@/components/landing-navbar";
 import { LandingHeroVisual } from "@/components/landing-hero-visual";
+import { CarIllustration } from "@/components/car-illustration";
+import { FloatingChip } from "@/components/floating-chip";
+import { HeroTilt } from "@/components/hero-tilt";
+import { StatCounter } from "@/components/stat-counter";
 import { Reveal } from "@/components/reveal";
+
+const STATS = [
+  { value: 6, suffix: "", label: "Módulos já integrados" },
+  { value: 150, suffix: "+", label: "Testes automatizados de segurança" },
+  { value: 100, suffix: "%", label: "Do histórico pertence ao motorista" },
+  { value: 0, suffix: "", label: "Chance de ver dado de outro tenant" },
+];
 
 const FEATURES = [
   {
@@ -138,10 +150,42 @@ export default function Home() {
           </div>
 
           <Reveal delay={150}>
-            <LandingHeroVisual />
+            <HeroTilt className="relative mx-auto w-full max-w-md">
+              <div
+                aria-hidden
+                className="absolute -inset-10 -z-10 rounded-[3rem] bg-gradient-to-br from-[var(--wz-primary)]/25 via-[var(--wz-cyan)]/15 to-transparent blur-2xl"
+              />
+              <CarIllustration className="w-full drop-shadow-2xl" />
+
+              <FloatingChip
+                icon={Bell}
+                title="Veículo pronto"
+                subtitle="notificado agora"
+                className="absolute -right-2 top-2 w-44 sm:-right-6 sm:w-48"
+              />
+              <FloatingChip
+                icon={CheckCircle2}
+                title="Orçamento aprovado"
+                subtitle="v2 · R$ 240,00"
+                tone="success"
+                delay={800}
+                className="absolute -left-2 bottom-24 w-44 sm:-left-8 sm:bottom-28 sm:w-48"
+              />
+            </HeroTilt>
           </Reveal>
         </div>
       </section>
+
+      {/* ── Stat counters ────────────────────────────────────────────────── */}
+      <Reveal>
+        <section className="mx-auto max-w-6xl px-6 py-14">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            {STATS.map((stat) => (
+              <StatCounter key={stat.label} {...stat} />
+            ))}
+          </div>
+        </section>
+      </Reveal>
 
       {/* ── Trust strip ──────────────────────────────────────────────────── */}
       <Reveal>
@@ -188,6 +232,34 @@ export default function Home() {
               </div>
             </Reveal>
           ))}
+        </div>
+      </section>
+
+      {/* ── Product preview ──────────────────────────────────────────────── */}
+      <section className="border-t border-[var(--wz-border)] bg-[var(--wz-surface)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 sm:py-28 lg:grid-cols-2">
+          <Reveal>
+            <div>
+              <h2 className="text-3xl font-semibold tracking-tight text-[var(--wz-text-primary)] sm:text-4xl">
+                Veja como fica no seu bolso
+              </h2>
+              <p className="mt-4 max-w-md text-[var(--wz-text-secondary)]">
+                O motorista acompanha a quilometragem, o orçamento aprovado, o prazo de
+                entrega e a garantia do próprio veículo — atualizado em tempo real, sem
+                precisar ligar pra oficina.
+              </p>
+              <Link
+                href="/cadastro"
+                className="mt-6 inline-flex items-center gap-2 font-medium text-[var(--wz-primary)]"
+              >
+                Experimentar agora
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </Reveal>
+          <Reveal delay={150}>
+            <LandingHeroVisual />
+          </Reveal>
         </div>
       </section>
 

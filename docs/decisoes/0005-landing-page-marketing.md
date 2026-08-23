@@ -59,6 +59,59 @@ Pesquisa feita antes de implementar (fontes no fim deste documento):
 - **Gradientes on-brand**: só azul (`--wz-primary`) e ciano (`--wz-cyan`),
   os tokens já existentes — nunca roxo/rosa genérico de template de SaaS.
 
+## Round 2 — mais impacto, sem imagem real de carro
+
+Pedido de acompanhamento: usar fotos reais de carro pra mais impacto, e
+deixar a tela de login parecida com a de uma locadora tipo Movida (painel
+de marca com foto + form ao lado, padrão comum de conta de aluguel de
+carro/frota).
+
+Duas restrições concretas descobertas ao tentar atender isso:
+
+- **Este ambiente de execução não tem acesso à internet aberta** — o
+  proxy de rede da sessão bloqueia qualquer domínio fora de uma lista
+  curada (registries de pacote, APIs internas). Tentativas de acessar
+  `movida.com.br` e bancos de imagem (Unsplash, Wikimedia) pra estudar o
+  layout real ou baixar fotos retornaram bloqueio de rede — não foi
+  possível nem visualizar a página real da Movida, nem baixar uma foto.
+- **Fabricar uma URL de imagem não é uma opção** — instrução permanente
+  deste agente. Então "foto real" ficou fora de alcance nesta sessão por
+  restrição de ambiente, não por escolha de design.
+
+Decisão (confirmada com o usuário via pergunta direta): seguir com
+ilustração/gráfico construído — sem imagem externa nenhuma — em vez de
+placeholder vazio ou imagem fabricada.
+
+- **`components/car-illustration.tsx`** — SVG de carro desenhado à mão
+  (gradiente `--wz-primary`/`--wz-cyan`, rodas, brilho de farol, linhas de
+  velocidade), substitui a Wezcar em toda peça de marketing que precisar
+  de um "hero visual" de carro — landing e `AuthShell`.
+- **`components/hero-tilt.tsx`** — tilt 3D por `pointermove`, só pra
+  mouse (`pointerType === "mouse"`, sem listener nenhum em touch) — a
+  interatividade pedida, sem custo de performance em mobile, onde o
+  usuário real testa (ADR 0003).
+- **`components/stat-counter.tsx`** — contador animado (scroll → conta
+  até o valor) com números **reais e verificáveis neste repositório**
+  (6 módulos, 150+ testes pgTAP, 100% do histórico pertence ao motorista,
+  0 chance de vazamento entre tenants) — não métrica de negócio inventada.
+- **`components/floating-chip.tsx`** — chips flutuantes tipo notificação
+  sobre o carro, pra composição em camadas (mais dinâmico que uma imagem
+  plana única).
+- **`components/auth-shell.tsx`** — layout split-screen (painel de marca
+  com gradiente + `CarIllustration` + tagline de um lado, formulário do
+  outro) usado por `/entrar` e `/cadastro` — o padrão "conta de locadora"
+  pedido, sem depender de foto. Mobile empilha em coluna única (banner
+  compacto em cima, form embaixo) — não é a metade opcional.
+- Nova seção **"Veja como fica no seu bolso"** na landing reaproveita o
+  mockup de produto (`LandingHeroVisual`) que antes vivia só no hero,
+  agora com espaço próprio.
+
+Se no futuro o usuário fornecer fotos reais (upload direto, já que
+buscar/baixar por conta própria não é possível nesta sessão), elas podem
+substituir `CarIllustration` sem mudar o resto da composição — os
+componentes que a usam (`app/page.tsx`, `AuthShell`) recebem qualquer
+visual do mesmo tamanho no lugar.
+
 ## Consequências
 
 - A landing pública e o app autenticado agora têm dois vocabulários

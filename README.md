@@ -23,7 +23,10 @@ automaticamente cliente ou staff, com sino no shell), os papéis
 **PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, um shell/design
 system inicial (`docs/decisoes/0003-design-system-shell.md`) e uma landing
 page pública (`/`, antes do login — `docs/decisoes/0005-landing-page-marketing.md`)
-com tratamento de marketing (hero, bento grid de features, scroll-reveal),
+com tratamento de marketing (hero com ilustração de carro interativa
+(tilt no mouse), contadores animados com números reais do projeto, bento
+grid de features, scroll-reveal) e telas de `/entrar`/`/cadastro`
+redesenhadas em layout split-screen (padrão conta de locadora) — tudo
 deliberadamente diferente do visual minimalista do app autenticado.
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de

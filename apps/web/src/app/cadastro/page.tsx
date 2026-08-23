@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { AuthShell } from "@/components/auth-shell";
 import { signup } from "./actions";
 
 export default function CadastroPage() {
   const [state, formAction, pending] = useActionState(signup, null);
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-16">
+    <AuthShell>
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold text-[var(--wz-text-primary)]">
@@ -56,7 +57,7 @@ export default function CadastroPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthShell>
   );
 }
 

@@ -47,3 +47,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Landing page micro-interactions (ADR 0005) — shared so any floating card/chip on the
+   marketing landing can reuse the same gentle bob instead of each redefining it. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
