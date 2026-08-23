@@ -42,6 +42,9 @@ const STATUS_TONE: Record<string, Tone> = {
   DRAFT: "neutral",
   ORDERED: "info",
   PAID: "success",
+  INSERT: "success",
+  UPDATE: "info",
+  DELETE: "danger",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {

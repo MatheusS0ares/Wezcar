@@ -47,13 +47,14 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | vehicle-life, maintenance, warranty (histórico + garantias) | ✅ quarta fatia |
 | products, inventory, purchases, suppliers | ✅ quinta fatia |
 | financial, accounts-payable, accounts-receivable, payments | ✅ sexta fatia |
+| audit (audit_logs) | ✅ sétima fatia |
 | customers | ⏳ |
 | vehicle-life: documentos, fotos (dependem de Supabase Storage) | ⏳ |
 | pickup-delivery | ⏳ |
 | marketplace, sales | ⏳ |
 | treasury, fiscal, controllership | ⏳ |
 | notifications, chat, reviews, reports, analytics | ⏳ |
-| customization, workflow, rules, audit, integrations | ⏳ |
+| customization, workflow, rules, integrations | ⏳ |
 
 ## Ecossistema Wezcar
 

@@ -557,6 +557,30 @@ própria oficina — cliente nunca registra pagamento diretamente.
 | created_by | UUID | Não | — |
 | created_at | TIMESTAMPTZ | Sim | — |
 
+## AUDIT_LOGS
+
+RN-AUD-001: operações críticas devem registrar usuário, data, antes e
+depois. Tabela genérica, append-only, escrita exclusivamente pela trigger
+`audit_log_change()` (`SECURITY DEFINER`) — `authenticated` só tem
+`GRANT SELECT`. `tenant_id`/`record_id` são best-effort, extraídos da linha
+via `to_jsonb(...)->>'...'`, então ficam `null` em tabelas sem essas colunas
+(ex.: `tenants`, `user_roles`, que usa chave composta `user_id`+`role_id`
+sem coluna `id`). Hoje anexada a `tenants`, `user_roles`, `sla_definitions`
+e `warranty_definitions` — ver `docs/seguranca/rls-e-autenticacao.md` para o
+racional de quais tabelas e por quê.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Não | Extraído da linha auditada; `null` se a tabela não tiver essa coluna |
+| actor_id | UUID | Não | `auth.uid()` no momento da operação |
+| action | VARCHAR(10) | Sim | `INSERT` \| `UPDATE` \| `DELETE` |
+| table_name | VARCHAR(100) | Sim | `TG_TABLE_NAME` |
+| record_id | TEXT | Não | Extraído de `->>'id'`; `null` em tabela com chave composta |
+| before | JSONB | Não | Linha antes da mudança (`null` em `INSERT`) |
+| after | JSONB | Não | Linha depois da mudança (`null` em `DELETE`) |
+| created_at | TIMESTAMPTZ | Sim | — |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e

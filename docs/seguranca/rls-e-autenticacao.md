@@ -110,6 +110,40 @@ enfraquece o isolamento de tenant: o que continua isolado são os *dados
 operacionais* de cada tenant (`users`, `service_requests`, `work_orders`
 etc.), não a existência/nome público da oficina.
 
+## Auditoria (RN-AUD-001)
+
+RN-AUD-001: *"Operações críticas devem registrar usuário, data, antes e depois."*
+Uma única tabela genérica `audit_logs` + uma única função de trigger genérica
+`audit_log_change()` (`SECURITY DEFINER`), reaproveitada em qualquer tabela
+crítica em vez de uma tabela de auditoria por domínio. A trigger lê
+`tenant_id`/`id` da linha via `to_jsonb(...)->>'...'`, o que funciona mesmo em
+tabelas sem essas colunas (o operador `->>` simplesmente retorna `null`)  —
+então uma tabela **com** `tenant_id` (ex.: `sla_definitions`) produz
+auditoria visível ao staff daquele tenant, e uma tabela **sem** `tenant_id`
+(ex.: `tenants`, `user_roles`) produz auditoria visível só a
+`PLATFORM_ADMIN`, sem nenhum código extra.
+
+Hoje anexada a 4 tabelas — as superfícies de configuração/privilégio
+críticas que ainda não tinham nenhum histórico próprio:
+
+- `tenants` (`INSERT`/`UPDATE`)
+- `user_roles` (`INSERT`/`DELETE`) — a operação mais sensível do app
+  (concessão/revogação de papel), hoje só feita via SQL manual (ver acima);
+  a trigger audita mesmo assim, porque dispara independente do papel que
+  executa a operação.
+- `sla_definitions` (`INSERT`/`UPDATE`)
+- `warranty_definitions` (`INSERT`/`UPDATE`)
+
+Deliberadamente fora: tabelas que já têm histórico de domínio adequado
+(`work_order_events`, versionamento de `estimates`, o livro-razão de
+`payments`).
+
+`authenticated` só tem `GRANT SELECT` em `audit_logs` — nunca
+`INSERT`/`UPDATE`/`DELETE`; só a trigger escreve, via `SECURITY DEFINER`.
+Policy de `SELECT`: staff do próprio tenant (`tenant_id = current_tenant_id()`)
+ou `platform.super_admin`. Viewer somente-leitura em `/admin/auditoria`
+(gated por `PLATFORM_ADMIN`, mesmo padrão de `/admin`).
+
 ## Testes
 
 Testes pgTAP em `supabase/tests/database/`:
@@ -179,6 +213,12 @@ Testes pgTAP em `supabase/tests/database/`:
   cliente vê a própria conta a receber e os pagamentos ligados a ela, mas
   não consegue inserir um pagamento nem ver contas a pagar (são internas da
   oficina); staff de outra oficina não vê nada disso.
+- `0010_audit_logs.test.sql` — RN-AUD-001: criar/alterar um tenant gera
+  automaticamente auditoria (`INSERT`/`UPDATE`) com usuário, antes e depois;
+  conceder/revogar um papel (`user_roles`) gera auditoria só visível a
+  `PLATFORM_ADMIN`; alterar `sla_definitions` (tem `tenant_id`) gera
+  auditoria visível ao staff daquele tenant, não ao de outro; `authenticated`
+  não consegue inserir em `audit_logs` diretamente (só a trigger escreve).
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de

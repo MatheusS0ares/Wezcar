@@ -4,6 +4,8 @@
  *   supabase gen types typescript --linked > packages/types/src/database.ts
  * Shape mirrors supabase/migrations/*.sql — keep both in sync.
  */
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 export type Database = {
   public: {
     Tables: {
@@ -906,6 +908,45 @@ export type Database = {
           },
         ];
       };
+      audit_logs: {
+        Row: {
+          id: string;
+          tenant_id: string | null;
+          actor_id: string | null;
+          action: string;
+          table_name: string;
+          record_id: string | null;
+          before: Json | null;
+          after: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id?: string | null;
+          actor_id?: string | null;
+          action: string;
+          table_name: string;
+          record_id?: string | null;
+          before?: Json | null;
+          after?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey";
+            columns: ["tenant_id"];
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_logs_actor_id_fkey";
+            columns: ["actor_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -963,3 +1004,4 @@ export type PurchaseStatus = "DRAFT" | "ORDERED" | "RECEIVED" | "CANCELED";
 export type InventoryMovementType = "PURCHASE" | "USAGE" | "ADJUSTMENT" | "RETURN";
 export type AccountStatus = "OPEN" | "PAID" | "CANCELED";
 export type PaymentMethod = "PIX" | "CARD" | "CASH" | "TRANSFER" | "OTHER";
+export type AuditAction = "INSERT" | "UPDATE" | "DELETE";

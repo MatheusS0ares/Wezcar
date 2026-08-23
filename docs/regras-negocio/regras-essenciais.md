@@ -24,7 +24,7 @@ não invalidar testes e commits existentes — a regra em si é a mesma.
 | RN-STK-001 | Saldo de estoque só muda por movimentação auditável. | Crítica | ✅ `products.stock_on_hand` é cache mantido por `sync_product_stock()` a partir de `inventory_movements`; app só insere direto `type=ADJUSTMENT` (staff), `PURCHASE`/`USAGE` só nascem de trigger + teste pgTAP (`0008_inventory_and_purchases.test.sql`) |
 | RN-FIN-001 | Pagamentos precisam ser idempotentes para evitar baixa duplicada. | Crítica | ✅ `payments.idempotency_key` único por tenant (`payments_tenant_idempotency_key_unique`); chave gerada uma vez por carregamento da tela, não por clique + teste pgTAP (`0009_financial_accounts.test.sql`) |
 | RN-SLA-001 | Cálculo do SLA é responsabilidade do backend. | Alta | ✅ `due_at` carimbado por trigger na criação da OS; status derivado por `work_orders_sla_status()` (computed column) + teste pgTAP (`0006_appointments_and_sla.test.sql`) |
-| RN-AUD-001 | Operações críticas devem registrar usuário, data, antes e depois. | Alta | ⏳ Tabela `audit_logs` ainda não criada |
+| RN-AUD-001 | Operações críticas devem registrar usuário, data, antes e depois. | Alta | ✅ Trigger genérica `audit_log_change()` em `tenants`, `user_roles`, `sla_definitions`, `warranty_definitions` + teste pgTAP (`0010_audit_logs.test.sql`) |
 
 Ao implementar qualquer regra marcada como pendente, siga o template de
 feature do documento original (requisito → regra de negócio → dados →

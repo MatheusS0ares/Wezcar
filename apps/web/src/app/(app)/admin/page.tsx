@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { Warehouse } from "lucide-react";
+import Link from "next/link";
+import { ScrollText, Warehouse } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
@@ -28,6 +29,14 @@ export default async function AdminPage() {
   return (
     <div>
       <PageHeader title="Wezcar Admin" description="Tenants (oficinas) da plataforma." />
+
+      <Link
+        href="/admin/auditoria"
+        className="mb-6 flex items-center gap-3 rounded-xl border border-[var(--wz-border)] bg-[var(--wz-surface)] p-4 text-sm font-medium text-[var(--wz-text-primary)] hover:border-[var(--wz-primary)]"
+      >
+        <ScrollText className="h-5 w-5 text-[var(--wz-primary)]" />
+        Auditoria — operações críticas (tenants, papéis, SLA, garantia)
+      </Link>
 
       <Card className="mb-6">
         <CardHeader>
