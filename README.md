@@ -20,8 +20,11 @@ configuração/privilégio: tenants, papéis, SLA, garantia) e
 **Notificações** (`notifications` — chamado aberto, orçamento enviado/
 decidido, OS pronta/entregue e agendamento confirmado avisam
 automaticamente cliente ou staff, com sino no shell), os papéis
-**PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design
-system inicial (`docs/decisoes/0003-design-system-shell.md`).
+**PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, um shell/design
+system inicial (`docs/decisoes/0003-design-system-shell.md`) e uma landing
+page pública (`/`, antes do login — `docs/decisoes/0005-landing-page-marketing.md`)
+com tratamento de marketing (hero, bento grid de features, scroll-reveal),
+deliberadamente diferente do visual minimalista do app autenticado.
 
 O plano completo do produto (visão de negócio, todos os módulos, dicionário de
 dados alvo, roadmap por etapas) está no documento original do projeto; este
