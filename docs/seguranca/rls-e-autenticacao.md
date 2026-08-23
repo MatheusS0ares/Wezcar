@@ -74,8 +74,8 @@ where u.email = 'seu-email@exemplo.com'
 
 Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
 nulo) com as permissões `service_request.manage`, `work_order.update`,
-`diagnostic.manage`, `estimate.manage`, `appointment.manage`, `sla.manage`
-e `warranty.manage`. Ao
+`diagnostic.manage`, `estimate.manage`, `appointment.manage`, `sla.manage`,
+`warranty.manage`, `product.manage` e `purchase.manage`. Ao
 contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
 `tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
 policies de `service_requests`/`work_orders` (que exigem
@@ -160,6 +160,15 @@ Testes pgTAP em `supabase/tests/database/`:
   diretamente uma linha `WORK_ORDER` "forjada"; staff da oficina que atendeu
   vê o registro automático mas não a manutenção `MANUAL` do cliente; staff de
   outra oficina não vê nada.
+- `0008_inventory_and_purchases.test.sql` — RN-STK-001: app não consegue
+  forjar `inventory_movements` direto com `type PURCHASE`/`USAGE` (RLS
+  bloqueia — só os triggers de compra recebida/OS entregue escrevem esses),
+  mas consegue um ajuste manual `type ADJUSTMENT`; itens de uma compra ainda
+  não mexem no estoque enquanto ela não é `RECEIVED`; receber a compra gera
+  a entrada e atualiza `unit_cost`; vincular um item de orçamento a um
+  produto e entregar a OS consome a quantidade do estoque automaticamente;
+  trigger rejeita item de orçamento com produto de outra oficina; staff de
+  outra oficina não vê produtos/fornecedores/compras/movimentações alheias.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de

@@ -45,10 +45,11 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | diagnostics, estimates/estimate-items (orçamento versionado) | ✅ segunda fatia |
 | appointments, sla (agenda + prazo de entrega) | ✅ terceira fatia |
 | vehicle-life, maintenance, warranty (histórico + garantias) | ✅ quarta fatia |
+| products, inventory, purchases, suppliers | ✅ quinta fatia |
 | customers | ⏳ |
 | vehicle-life: documentos, fotos (dependem de Supabase Storage) | ⏳ |
 | pickup-delivery | ⏳ |
-| products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
+| marketplace, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |
 | notifications, chat, reviews, reports, analytics | ⏳ |
 | customization, workflow, rules, audit, integrations | ⏳ |

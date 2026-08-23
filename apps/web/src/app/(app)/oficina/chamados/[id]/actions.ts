@@ -70,6 +70,7 @@ const estimateItemSchema = z.object({
   kind: z.enum(["PART", "LABOR"]),
   quantity: z.coerce.number().positive("Quantidade precisa ser maior que zero."),
   unitPrice: z.coerce.number().min(0, "Valor não pode ser negativo."),
+  productId: z.uuid().optional().or(z.literal("")),
 });
 
 export async function createEstimate(_prevState: unknown, formData: FormData) {
@@ -84,6 +85,7 @@ export async function createEstimate(_prevState: unknown, formData: FormData) {
   const kinds = formData.getAll("kind");
   const quantities = formData.getAll("quantity");
   const unitPrices = formData.getAll("unitPrice");
+  const productIds = formData.getAll("productId");
 
   const items: z.infer<typeof estimateItemSchema>[] = [];
   for (let i = 0; i < descriptions.length; i++) {
@@ -92,6 +94,7 @@ export async function createEstimate(_prevState: unknown, formData: FormData) {
       kind: kinds[i],
       quantity: quantities[i],
       unitPrice: unitPrices[i],
+      productId: productIds[i],
     });
     if (!parsed.success) {
       return { error: `Item ${i + 1}: ${parsed.error.issues[0]?.message ?? "dados inválidos."}` };
@@ -148,6 +151,7 @@ export async function createEstimate(_prevState: unknown, formData: FormData) {
       description: item.description,
       quantity: item.quantity,
       unit_price: item.unitPrice,
+      product_id: item.productId || null,
     })),
   );
 

@@ -50,21 +50,23 @@ export default async function OficinaChamadoDetailPage({
     notFound();
   }
 
-  const [{ data: diagnostic }, { data: estimates }, { data: workOrder }] = await Promise.all([
-    supabase
-      .from("diagnostics")
-      .select("summary, updated_at")
-      .eq("service_request_id", id)
-      .maybeSingle(),
-    supabase
-      .from("estimates")
-      .select(
-        "id, version, status, notes, created_at, estimate_items(description, kind, quantity, unit_price)",
-      )
-      .eq("service_request_id", id)
-      .order("version", { ascending: false }),
-    supabase.from("work_orders").select("id").eq("service_request_id", id).maybeSingle(),
-  ]);
+  const [{ data: diagnostic }, { data: estimates }, { data: workOrder }, { data: products }] =
+    await Promise.all([
+      supabase
+        .from("diagnostics")
+        .select("summary, updated_at")
+        .eq("service_request_id", id)
+        .maybeSingle(),
+      supabase
+        .from("estimates")
+        .select(
+          "id, version, status, notes, created_at, estimate_items(description, kind, quantity, unit_price)",
+        )
+        .eq("service_request_id", id)
+        .order("version", { ascending: false }),
+      supabase.from("work_orders").select("id").eq("service_request_id", id).maybeSingle(),
+      supabase.from("products").select("id, name, unit, unit_price, stock_on_hand").order("name"),
+    ]);
 
   const latestEstimate = estimates?.[0] ?? null;
   const canCreateOrder = latestEstimate?.status === "APPROVED" && !workOrder;
@@ -112,7 +114,7 @@ export default async function OficinaChamadoDetailPage({
               <h2 className="text-sm font-semibold text-[var(--wz-text-primary)]">Novo orçamento</h2>
             </CardHeader>
             <CardBody>
-              <EstimateForm serviceRequestId={id} />
+              <EstimateForm serviceRequestId={id} products={products ?? []} />
             </CardBody>
           </Card>
 

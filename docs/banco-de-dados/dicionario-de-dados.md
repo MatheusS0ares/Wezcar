@@ -85,8 +85,9 @@ Catálogo global, formato de código `<módulo>.<ação>`.
 Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
 `vehicle.update`, `work_order.update`, `estimate.approve`,
 `platform.super_admin`, `service_request.manage`, `diagnostic.manage`,
-`estimate.manage`, `appointment.manage`, `sla.manage`, `warranty.manage`.
-Cada feature nova adiciona seus próprios códigos numa migration própria.
+`estimate.manage`, `appointment.manage`, `sla.manage`, `warranty.manage`,
+`product.manage`, `purchase.manage`. Cada feature nova adiciona seus
+próprios códigos numa migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -262,6 +263,12 @@ redundante em `estimates`. Só inseridos junto com a criação do orçamento
 (RLS exige que o orçamento pai ainda esteja `SENT`); sem `UPDATE`/`DELETE`
 para `authenticated`.
 
+`product_id` (desde `20260826010000_inventory_and_purchases.sql`) é um link
+opcional pro catálogo — quando preenchido, entregar a OS que nasce desse
+orçamento desconta a quantidade do estoque automaticamente (ver
+`consume_stock_on_work_order_delivered()` em INVENTORY_MOVEMENTS). Um
+trigger garante que o produto pertence à mesma oficina do orçamento.
+
 | Campo | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
 | id | UUID | Sim | ID |
@@ -270,6 +277,7 @@ para `authenticated`.
 | description | VARCHAR(200) | Sim | Ex. "Pastilha de freio dianteira" |
 | quantity | NUMERIC(10,2) | Sim | — |
 | unit_price | NUMERIC(12,2) | Sim | — |
+| product_id | UUID | Não | FK → products (peça do catálogo, opcional) |
 | created_at | TIMESTAMPTZ | Sim | — |
 
 ## SLA_DEFINITIONS
@@ -398,14 +406,103 @@ column** (mesmo padrão de `work_orders_sla_status`), exposta via
 `select=*,warranties_status`: `ACTIVE` ou `EXPIRED`, derivado de
 `expires_at` na leitura.
 
+## PRODUCTS
+
+Catálogo de peças/produtos da oficina. `stock_on_hand` é uma coluna cache
+mantida por trigger (`sync_product_stock`) a partir de
+`inventory_movements` — nunca escrita direto pelo app (RN-STK-001), mesmo
+padrão de `vehicles.mileage`.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina dona do produto |
+| sku | VARCHAR(50) | Não | Código interno (único por tenant quando preenchido) |
+| name | VARCHAR(200) | Sim | — |
+| unit | VARCHAR(10) | Sim | Unidade (`UN`, `L` etc.) — padrão `UN` |
+| unit_cost | NUMERIC(12,2) | Não | Último custo de compra (atualizado ao receber uma compra) |
+| unit_price | NUMERIC(12,2) | Não | Preço de venda sugerido — usado pra pré-preencher item de orçamento |
+| min_stock | INT | Sim | Ponto de reposição (`>= 0`) |
+| stock_on_hand | INT | Sim | Saldo atual — cache, só muda via `inventory_movements` |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## INVENTORY_MOVEMENTS
+
+RN-STK-001: saldo de estoque só muda por movimentação auditável. Fato
+imutável — só inserção, `quantity` assinada (positiva = entrada, negativa =
+saída). App só consegue inserir diretamente `type = 'ADJUSTMENT'` (correção
+manual, ex. contagem física); `PURCHASE` nasce só de `receive_purchase()` e
+`USAGE` só de `consume_stock_on_work_order_delivered()` (quando uma OS com
+item de orçamento vinculado a um produto chega em `DELIVERED`) — ambos
+`SECURITY DEFINER`, não dependem de policy de INSERT pra escrever.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| product_id | UUID | Sim | FK → products |
+| type | VARCHAR(20) | Sim | `PURCHASE` \| `USAGE` \| `ADJUSTMENT` \| `RETURN` |
+| quantity | INT | Sim | Assinada, `<> 0` |
+| work_order_id | UUID | Não | OS que consumiu a peça (só em `USAGE`) |
+| purchase_id | UUID | Não | Compra que gerou a entrada (só em `PURCHASE`) |
+| notes | TEXT | Não | — |
+| created_by | UUID | Não | — |
+| created_at | TIMESTAMPTZ | Sim | — |
+
+Esta fatia deliberadamente não reserva estoque na aprovação do orçamento
+(só desconta na entrega) e não bloqueia saldo negativo — ver comentário na
+migration `20260826010000_inventory_and_purchases.sql`.
+
+## SUPPLIERS
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| name | VARCHAR(200) | Sim | — |
+| phone | VARCHAR(30) | Não | — |
+| notes | TEXT | Não | — |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## PURCHASES / PURCHASE_ITEMS
+
+Uma compra de peças de um fornecedor. Itens só podem ser inseridos enquanto
+a compra está `DRAFT`/`ORDERED`. Mudar o status pra `RECEIVED`
+(`receive_purchase()`) gera uma `inventory_movements` (`type PURCHASE`) por
+item e atualiza `products.unit_cost` com o custo pago — e carimba
+`received_at` automaticamente.
+
+**PURCHASES**
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina |
+| supplier_id | UUID | Não | FK → suppliers |
+| status | VARCHAR(20) | Sim | `DRAFT` → `ORDERED`/`RECEIVED`/`CANCELED` |
+| notes | TEXT | Não | — |
+| created_by | UUID | Não | — |
+| created_at | TIMESTAMPTZ | Sim | — |
+| received_at | TIMESTAMPTZ | Não | Carimbado automaticamente ao receber |
+
+**PURCHASE_ITEMS**
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| purchase_id | UUID | Sim | FK → purchases |
+| product_id | UUID | Sim | FK → products |
+| quantity | INT | Sim | `> 0` |
+| unit_cost | NUMERIC(12,2) | Sim | `>= 0` |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 `PLATFORM_ADMIN`) com as permissões `service_request.manage`,
 `work_order.update`, `diagnostic.manage`, `estimate.manage`,
-`appointment.manage`, `sla.manage` e `warranty.manage`. Atribuído
-manualmente via SQL a um usuário com `tenant_id` já definido (ver
-`docs/seguranca/rls-e-autenticacao.md`).
+`appointment.manage`, `sla.manage`, `warranty.manage`, `product.manage` e
+`purchase.manage`. Atribuído manualmente via SQL a um usuário com
+`tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
 
 ## Funções auxiliares de RLS
 
@@ -419,6 +516,6 @@ manualmente via SQL a um usuário com `tenant_id` já definido (ver
 ## Próximas tabelas
 
 `CUSTOMERS`, documentos/fotos da Vida do Carro (dependem de Supabase
-Storage), estoque/compras/financeiro etc. entram quando as respectivas
+Storage), financeiro etc. entram quando as respectivas
 etapas do roadmap forem implementadas — ver a Especificação Técnica para o
 dicionário-alvo completo.

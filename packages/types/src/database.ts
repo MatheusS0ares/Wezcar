@@ -411,6 +411,7 @@ export type Database = {
           description: string;
           quantity: number;
           unit_price: number;
+          product_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -420,6 +421,7 @@ export type Database = {
           description: string;
           quantity?: number;
           unit_price: number;
+          product_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["estimate_items"]["Insert"]>;
@@ -428,6 +430,12 @@ export type Database = {
             foreignKeyName: "estimate_items_estimate_id_fkey";
             columns: ["estimate_id"];
             referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "estimate_items_product_id_fkey";
+            columns: ["product_id"];
+            referencedRelation: "products";
             referencedColumns: ["id"];
           },
         ];
@@ -638,6 +646,155 @@ export type Database = {
           },
         ];
       };
+      products: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          sku: string | null;
+          name: string;
+          unit: string;
+          unit_cost: number | null;
+          unit_price: number | null;
+          min_stock: number;
+          stock_on_hand: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          sku?: string | null;
+          name: string;
+          unit?: string;
+          unit_cost?: number | null;
+          unit_price?: number | null;
+          min_stock?: number;
+          stock_on_hand?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
+        Relationships: [];
+      };
+      suppliers: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          phone: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          phone?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["suppliers"]["Insert"]>;
+        Relationships: [];
+      };
+      purchases: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          supplier_id: string | null;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          received_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          supplier_id?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          received_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["purchases"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "purchases_supplier_id_fkey";
+            columns: ["supplier_id"];
+            referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      purchase_items: {
+        Row: {
+          id: string;
+          purchase_id: string;
+          product_id: string;
+          quantity: number;
+          unit_cost: number;
+        };
+        Insert: {
+          id?: string;
+          purchase_id: string;
+          product_id: string;
+          quantity: number;
+          unit_cost: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["purchase_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_purchase_id_fkey";
+            columns: ["purchase_id"];
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_items_product_id_fkey";
+            columns: ["product_id"];
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory_movements: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          product_id: string;
+          type: string;
+          quantity: number;
+          work_order_id: string | null;
+          purchase_id: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          product_id: string;
+          type: string;
+          quantity: number;
+          work_order_id?: string | null;
+          purchase_id?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["inventory_movements"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey";
+            columns: ["product_id"];
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -678,7 +835,9 @@ export type PermissionCode =
   | "estimate.manage"
   | "appointment.manage"
   | "sla.manage"
-  | "warranty.manage";
+  | "warranty.manage"
+  | "product.manage"
+  | "purchase.manage";
 
 export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
 export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";
@@ -688,3 +847,5 @@ export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "DONE" | "CANCELED" 
 export type SlaStatus = "NONE" | "ON_TRACK" | "AT_RISK" | "BREACHED" | "MET" | "MISSED" | "CANCELED";
 export type MaintenanceSource = "WORK_ORDER" | "MANUAL";
 export type WarrantyStatus = "ACTIVE" | "EXPIRED";
+export type PurchaseStatus = "DRAFT" | "ORDERED" | "RECEIVED" | "CANCELED";
+export type InventoryMovementType = "PURCHASE" | "USAGE" | "ADJUSTMENT" | "RETURN";

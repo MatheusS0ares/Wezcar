@@ -21,7 +21,7 @@ não invalidar testes e commits existentes — a regra em si é a mesma.
 | RN-OS-002 *(nova)* | Criar/alterar OS é exclusivo de staff da própria oficina; cliente só lê a própria OS. | Crítica | ✅ RLS + teste pgTAP |
 | RN-EST-001 | Orçamento enviado deve ser versionado quando alterado. | Alta | ✅ Trigger `version_and_supersede_estimate` (nenhuma policy de UPDATE de conteúdo para staff; desde `20260824020000` o próprio trigger também força `status = 'SENT'` no INSERT, fechando a brecha de staff criar um orçamento já `APPROVED`) + teste pgTAP (`0005_diagnostics_and_estimates.test.sql`) |
 | RN-EST-002 *(nova)* | Uma OS originada de um chamado só pode ser criada com um orçamento `APPROVED` para esse chamado. | Crítica | ✅ Trigger `enforce_work_order_requires_approved_estimate` + teste pgTAP |
-| RN-STK-001 | Saldo de estoque só muda por movimentação auditável. | Crítica | ⏳ Depende do módulo de estoque |
+| RN-STK-001 | Saldo de estoque só muda por movimentação auditável. | Crítica | ✅ `products.stock_on_hand` é cache mantido por `sync_product_stock()` a partir de `inventory_movements`; app só insere direto `type=ADJUSTMENT` (staff), `PURCHASE`/`USAGE` só nascem de trigger + teste pgTAP (`0008_inventory_and_purchases.test.sql`) |
 | RN-FIN-001 | Pagamentos precisam ser idempotentes para evitar baixa duplicada. | Crítica | ⏳ Depende do módulo financeiro |
 | RN-SLA-001 | Cálculo do SLA é responsabilidade do backend. | Alta | ✅ `due_at` carimbado por trigger na criação da OS; status derivado por `work_orders_sla_status()` (computed column) + teste pgTAP (`0006_appointments_and_sla.test.sql`) |
 | RN-AUD-001 | Operações críticas devem registrar usuário, data, antes e depois. | Alta | ⏳ Tabela `audit_logs` ainda não criada |

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ClipboardList, Wrench } from "lucide-react";
+import { ClipboardList, Package, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getNavContext } from "@/lib/nav";
 import { PageHeader } from "@/components/ui/page-header";
@@ -19,23 +19,28 @@ export default async function OficinaPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: requests }, { data: orders }, { data: slaDefinition }] = await Promise.all([
-    supabase.from("service_requests").select("status"),
-    supabase.from("work_orders").select("status, work_orders_sla_status"),
-    ctx.profile?.tenant_id
-      ? supabase
-          .from("sla_definitions")
-          .select("default_hours")
-          .eq("tenant_id", ctx.profile.tenant_id)
-          .maybeSingle()
-      : { data: null },
-  ]);
+  const [{ data: requests }, { data: orders }, { data: slaDefinition }, { data: products }] =
+    await Promise.all([
+      supabase.from("service_requests").select("status"),
+      supabase.from("work_orders").select("status, work_orders_sla_status"),
+      ctx.profile?.tenant_id
+        ? supabase
+            .from("sla_definitions")
+            .select("default_hours")
+            .eq("tenant_id", ctx.profile.tenant_id)
+            .maybeSingle()
+        : { data: null },
+      supabase.from("products").select("min_stock, stock_on_hand"),
+    ]);
 
   const countBy = (rows: { status: string }[] | null, status: string) =>
     rows?.filter((r) => r.status === status).length ?? 0;
 
   const countBySla = (status: string) =>
     orders?.filter((o) => o.work_orders_sla_status === status).length ?? 0;
+
+  const lowStockCount =
+    products?.filter((p) => p.min_stock > 0 && p.stock_on_hand < p.min_stock).length ?? 0;
 
   const stats = [
     { label: "Chamados novos", value: countBy(requests, "OPEN") },
@@ -44,6 +49,7 @@ export default async function OficinaPage() {
     { label: "OS prontas", value: countBy(orders, "READY") },
     { label: "SLA em risco", value: countBySla("AT_RISK") },
     { label: "SLA estourado", value: countBySla("BREACHED") },
+    { label: "Produtos abaixo do estoque mínimo", value: lowStockCount },
   ];
 
   return (
@@ -74,6 +80,12 @@ export default async function OficinaPage() {
           <Card className="flex items-center gap-3 px-4 py-5 transition-colors hover:border-[var(--wz-primary)]">
             <Wrench className="h-5 w-5 text-[var(--wz-primary)]" />
             <span className="font-medium text-[var(--wz-text-primary)]">Ordens de serviço</span>
+          </Card>
+        </Link>
+        <Link href="/oficina/estoque">
+          <Card className="flex items-center gap-3 px-4 py-5 transition-colors hover:border-[var(--wz-primary)]">
+            <Package className="h-5 w-5 text-[var(--wz-primary)]" />
+            <span className="font-medium text-[var(--wz-text-primary)]">Estoque</span>
           </Card>
         </Link>
       </div>

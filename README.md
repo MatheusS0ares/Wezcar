@@ -10,7 +10,9 @@ histórico de quilometragem), a **Wezcar Oficina** (chamados, diagnóstico,
 orçamento versionado, agenda e SLA de entrega — Solicitação → Diagnóstico →
 Orçamento → Aprovação → OS → Agendamento), a **Vida do Carro** (uma OS
 entregue vira automaticamente histórico de manutenção + garantia, e o
-motorista também registra manutenções feitas fora da Wezcar), os papéis
+motorista também registra manutenções feitas fora da Wezcar), **Estoque e
+Compras** (catálogo de peças, entrada por compra recebida, saída automática
+quando uma OS com item vinculado a um produto é entregue), os papéis
 **PLATFORM_ADMIN** ("Wezcar Admin") e **WORKSHOP_ADMIN**, e um shell/design
 system inicial (`docs/decisoes/0003-design-system-shell.md`).
 
@@ -92,7 +94,9 @@ aceito, acompanha diagnóstico/orçamento/agendamento e aprova em
 `/chamados/[id]`), `/oficina` (dashboard com SLA em risco/estourado
 + configuração do SLA padrão + `/oficina/chamados` — aceitar, recusar e, em
 `/oficina/chamados/[id]`, registrar diagnóstico e enviar orçamento — +
-`/oficina/os` — agendar execução e ver o prazo de entrega de cada OS, só para
+`/oficina/os` — agendar execução e ver o prazo de entrega de cada OS — +
+`/oficina/estoque` — catálogo de produtos e ajuste de saldo +
+`/oficina/estoque/compras` — fornecedores e recebimento de compras, só para
 quem tem o papel `WORKSHOP_ADMIN`) e `/admin` (Wezcar Admin, só para
 `PLATFORM_ADMIN`) — ver `docs/seguranca/rls-e-autenticacao.md` para como
 conceder esses papéis. `/api/health` verifica a conexão com o banco.
