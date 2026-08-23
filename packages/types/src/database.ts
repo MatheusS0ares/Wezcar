@@ -277,6 +277,7 @@ export type Database = {
           service_request_id: string | null;
           customer_id: string;
           vehicle_id: string;
+          estimate_id: string | null;
           status: string;
           notes: string | null;
           opened_at: string;
@@ -290,6 +291,7 @@ export type Database = {
           service_request_id?: string | null;
           customer_id: string;
           vehicle_id: string;
+          estimate_id?: string | null;
           status?: string;
           notes?: string | null;
           opened_at?: string;
@@ -321,6 +323,109 @@ export type Database = {
             foreignKeyName: "work_orders_customer_id_fkey";
             columns: ["customer_id"];
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "work_orders_estimate_id_fkey";
+            columns: ["estimate_id"];
+            referencedRelation: "estimates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diagnostics: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          service_request_id: string;
+          customer_id: string;
+          summary: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          service_request_id: string;
+          customer_id: string;
+          summary: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["diagnostics"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "diagnostics_service_request_id_fkey";
+            columns: ["service_request_id"];
+            referencedRelation: "service_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimates: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          service_request_id: string;
+          customer_id: string;
+          version: number;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          decided_at: string | null;
+          decided_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          service_request_id: string;
+          customer_id: string;
+          version?: number;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["estimates"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "estimates_service_request_id_fkey";
+            columns: ["service_request_id"];
+            referencedRelation: "service_requests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      estimate_items: {
+        Row: {
+          id: string;
+          estimate_id: string;
+          kind: string;
+          description: string;
+          quantity: number;
+          unit_price: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          estimate_id: string;
+          kind: string;
+          description: string;
+          quantity?: number;
+          unit_price: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["estimate_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "estimate_items_estimate_id_fkey";
+            columns: ["estimate_id"];
+            referencedRelation: "estimates";
             referencedColumns: ["id"];
           },
         ];
@@ -383,7 +488,11 @@ export type PermissionCode =
   | "work_order.update"
   | "estimate.approve"
   | "platform.super_admin"
-  | "service_request.manage";
+  | "service_request.manage"
+  | "diagnostic.manage"
+  | "estimate.manage";
 
 export type ServiceRequestStatus = "OPEN" | "ACCEPTED" | "REJECTED" | "CANCELED";
 export type WorkOrderStatus = "OPEN" | "IN_PROGRESS" | "READY" | "DELIVERED" | "CANCELED";
+export type EstimateStatus = "SENT" | "APPROVED" | "REJECTED" | "SUPERSEDED";
+export type EstimateItemKind = "PART" | "LABOR";

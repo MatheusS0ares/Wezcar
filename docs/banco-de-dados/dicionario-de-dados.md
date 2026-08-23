@@ -84,8 +84,9 @@ Catálogo global, formato de código `<módulo>.<ação>`.
 
 Catálogo até agora: `tenant.manage`, `user.manage`, `vehicle.create`,
 `vehicle.update`, `work_order.update`, `estimate.approve`,
-`platform.super_admin`, `service_request.manage`. Cada feature nova adiciona
-seus próprios códigos numa migration própria.
+`platform.super_admin`, `service_request.manage`, `diagnostic.manage`,
+`estimate.manage`. Cada feature nova adiciona seus próprios códigos numa
+migration própria.
 
 ## ROLE_PERMISSIONS *(adição sobre o dicionário original)*
 
@@ -181,9 +182,10 @@ oficina (permissão `service_request.manage`) aceita/recusa.
 
 ## WORK_ORDERS *("OS")*
 
-Versão simplificada do dicionário original: sem diagnóstico/orçamento ainda
-(entram quando esses módulos forem construídos). Só staff da própria oficina
-cria/altera; o cliente só lê a própria OS.
+Só staff da própria oficina cria/altera; o cliente só lê a própria OS. Desde
+`20260823010000_diagnostics_and_estimates.sql`, uma OS que vem de um chamado
+(`service_request_id` preenchido) exige um orçamento `APPROVED` para esse
+chamado — reforçado por trigger, não só pela UI (RN-EST-002).
 
 | Campo | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
@@ -192,6 +194,7 @@ cria/altera; o cliente só lê a própria OS.
 | service_request_id | UUID | Não | Chamado de origem |
 | customer_id | UUID | Sim | FK → users |
 | vehicle_id | UUID | Sim | FK → vehicles (mesmo trigger de ownership de service_requests) |
+| estimate_id | UUID | Não | Orçamento aprovado que originou a OS (rastreabilidade; nulo numa OS manual/sem chamado) |
 | status | VARCHAR(30) | Sim | `OPEN` → `IN_PROGRESS` → `READY` → `DELIVERED` (ou `CANCELED`) |
 | notes | TEXT | Não | Observações |
 | opened_at | TIMESTAMPTZ | Sim | Abertura |
@@ -213,12 +216,69 @@ e `log_work_order_status_change` (sem GRANT de INSERT para `authenticated`).
 | created_by | UUID | Não | `auth.uid()` de quem disparou a mudança |
 | created_at | TIMESTAMPTZ | Sim | — |
 
+## DIAGNOSTICS
+
+Um diagnóstico mutável por chamado (`service_request_id` é `UNIQUE`) — nota
+de trabalho do staff, não um compromisso versionado como o orçamento. Cliente
+só lê; staff da oficina cria e atualiza.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina responsável |
+| service_request_id | UUID | Sim | FK → service_requests (único — um diagnóstico por chamado) |
+| customer_id | UUID | Sim | FK → users (dono do veículo; validado por trigger contra o chamado) |
+| summary | TEXT | Sim | O que foi encontrado no veículo |
+| created_by | UUID | Não | Staff que registrou |
+| created_at / updated_at | TIMESTAMPTZ | Sim | — |
+
+## ESTIMATES
+
+RN-EST-001: orçamento é imutável uma vez enviado — não existe policy de
+`UPDATE` para staff alterar o conteúdo, só `INSERT` de uma nova versão. Um
+trigger (`version_and_supersede_estimate`) calcula `version` automaticamente
+e marca a versão anterior `SENT` como `SUPERSEDED`. Cliente decide (via
+`UPDATE` restrito a `SENT` → `APPROVED`/`REJECTED`, permissão
+`estimate.approve`); staff cria (`estimate.manage`).
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| tenant_id | UUID | Sim | Oficina responsável |
+| service_request_id | UUID | Sim | FK → service_requests |
+| customer_id | UUID | Sim | FK → users |
+| version | INT | Sim | Calculado pelo trigger — nunca enviado pelo app |
+| status | VARCHAR(20) | Sim | `SENT` → `APPROVED`/`REJECTED` (ou `SUPERSEDED`, automático ao criar a próxima versão) |
+| notes | TEXT | Não | Observação da oficina para o cliente |
+| created_by | UUID | Não | Staff que criou esta versão |
+| created_at | TIMESTAMPTZ | Sim | — |
+| decided_at / decided_by | TIMESTAMPTZ / UUID | Não | Carimbados automaticamente quando o cliente decide |
+
+## ESTIMATE_ITEMS
+
+Itens (peça ou mão de obra) de uma versão do orçamento. O total é a soma de
+`quantity * unit_price` calculada na consulta — não existe coluna de total
+redundante em `estimates`. Só inseridos junto com a criação do orçamento
+(RLS exige que o orçamento pai ainda esteja `SENT`); sem `UPDATE`/`DELETE`
+para `authenticated`.
+
+| Campo | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| id | UUID | Sim | ID |
+| estimate_id | UUID | Sim | FK → estimates |
+| kind | VARCHAR(20) | Sim | `PART` \| `LABOR` |
+| description | VARCHAR(200) | Sim | Ex. "Pastilha de freio dianteira" |
+| quantity | NUMERIC(10,2) | Sim | — |
+| unit_price | NUMERIC(12,2) | Sim | — |
+| created_at | TIMESTAMPTZ | Sim | — |
+
 ## WORKSHOP_ADMIN *(papel)*
 
 Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
-`PLATFORM_ADMIN`) com as permissões `service_request.manage` e
-`work_order.update`. Atribuído manualmente via SQL a um usuário com
-`tenant_id` já definido (ver `docs/seguranca/rls-e-autenticacao.md`).
+`PLATFORM_ADMIN`) com as permissões `service_request.manage`,
+`work_order.update`, `diagnostic.manage` e `estimate.manage`. Atribuído
+manualmente via SQL a um usuário com `tenant_id` já definido (ver
+`docs/seguranca/rls-e-autenticacao.md`).
 
 ## Funções auxiliares de RLS
 
@@ -229,7 +289,6 @@ Papel de sistema (`tenant_id` nulo, mesmo padrão de `CUSTOMER` e
 
 ## Próximas tabelas
 
-`CUSTOMERS`, `diagnostics`, `estimates`/`estimate_items`, `appointments`
-(agenda), `sla_definitions`/`sla_instances` etc. entram quando as respectivas
-etapas do roadmap forem implementadas — ver a Especificação Técnica para o
-dicionário-alvo completo.
+`CUSTOMERS`, `appointments` (agenda), `sla_definitions`/`sla_instances` etc.
+entram quando as respectivas etapas do roadmap forem implementadas — ver a
+Especificação Técnica para o dicionário-alvo completo.

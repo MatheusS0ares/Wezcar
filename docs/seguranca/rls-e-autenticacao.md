@@ -73,7 +73,8 @@ where u.email = 'seu-email@exemplo.com'
 ## Wezcar Oficina (papel `WORKSHOP_ADMIN`)
 
 Papel de sistema (mesmo padrão de `CUSTOMER`/`PLATFORM_ADMIN`: `tenant_id`
-nulo) com as permissões `service_request.manage` e `work_order.update`. Ao
+nulo) com as permissões `service_request.manage`, `work_order.update`,
+`diagnostic.manage` e `estimate.manage`. Ao
 contrário de `PLATFORM_ADMIN`, esse papel só faz sentido combinado com um
 `tenant_id` — o próprio usuário precisa pertencer a um tenant para que as
 policies de `service_requests`/`work_orders` (que exigem
@@ -130,6 +131,16 @@ Testes pgTAP em `supabase/tests/database/`:
   não vê nem consegue aceitar/alterar; aceitar um chamado carimba
   `accepted_at`; criar uma OS gera o evento `CREATED`; mudar o status gera
   `STATUS_CHANGE`; o cliente não consegue alterar a própria OS (só ler).
+  Desde `20260823010000_diagnostics_and_estimates.sql`, criar a OS neste
+  teste também exige um orçamento aprovado primeiro (RN-EST-002).
+- `0005_diagnostics_and_estimates.test.sql` — RN-EST-001/002: staff de outra
+  oficina não consegue diagnosticar nem orçar um chamado alheio; cliente lê o
+  diagnóstico mas não altera; criar uma segunda versão do orçamento marca a
+  primeira como `SUPERSEDED` automaticamente e não existe forma de editar o
+  conteúdo de uma versão já enviada; cliente só decide (`APPROVED`/
+  `REJECTED`) a versão que está `SENT`, nunca uma já superada; criar OS sem
+  orçamento aprovado é rejeitado pelo trigger; com o orçamento aprovado, a OS
+  é criada normalmente e referencia essa versão.
 
 Rode com `pnpm supabase:test` (requer Docker com acesso normal à internet
 para baixar a imagem oficial `supabase/postgres`). Nesta sessão de

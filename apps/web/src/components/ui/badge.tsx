@@ -14,17 +14,20 @@ const toneClasses: Record<Tone, string> = {
 const STATUS_TONE: Record<string, Tone> = {
   OPEN: "info",
   WAITING_WORKSHOP: "info",
+  SENT: "info",
   ACCEPTED: "primary",
   IN_PROGRESS: "primary",
   READY: "success",
   DELIVERED: "success",
   CLOSED: "success",
   ACTIVE: "success",
+  APPROVED: "success",
   REJECTED: "danger",
   CANCELED: "danger",
   SUSPENDED: "warning",
   BLOCKED: "danger",
   INACTIVE: "neutral",
+  SUPERSEDED: "neutral",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {

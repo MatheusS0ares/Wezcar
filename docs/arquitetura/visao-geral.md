@@ -41,9 +41,10 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | auth, users, tenants | ✅ Fundação |
 | organizations, workshops | ⏳ (tenant simplificado = oficina) |
 | vehicles (cadastro + histórico de quilometragem) | ✅ ETAPA 4 |
-| service-requests, work-orders (chamados + OS, sem diagnóstico/orçamento) | ✅ primeira fatia |
+| service-requests, work-orders (chamados + OS) | ✅ primeira fatia |
+| diagnostics, estimates/estimate-items (orçamento versionado) | ✅ segunda fatia |
 | customers, vehicle-life, maintenance | ⏳ |
-| diagnostics, estimates, appointments, sla, pickup-delivery | ⏳ |
+| appointments, sla, pickup-delivery | ⏳ |
 | products, inventory, marketplace, purchases, suppliers, sales | ⏳ |
 | financial, accounts-payable, accounts-receivable, treasury, payments, fiscal, controllership | ⏳ |
 | notifications, chat, reviews, reports, analytics | ⏳ |

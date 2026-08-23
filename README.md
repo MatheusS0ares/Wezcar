@@ -6,8 +6,9 @@ Monorepo da Wezcar — plataforma que conecta clientes, oficinas e autopeças,
 acompanhando a vida do veículo e a gestão da oficina. Este README cobre o que
 já foi construído: a **Fundação** (ETAPA 1-3 — repositório, banco
 multi-tenant no Supabase, autenticação), **ETAPA 4** (cadastro de veículo +
-histórico de quilometragem), a primeira fatia da **Wezcar Oficina** (chamados
-e ordens de serviço), os papéis **PLATFORM_ADMIN** ("Wezcar Admin") e
+histórico de quilometragem), a **Wezcar Oficina** (chamados, diagnóstico,
+orçamento versionado e ordens de serviço — Solicitação → Diagnóstico →
+Orçamento → Aprovação → OS), os papéis **PLATFORM_ADMIN** ("Wezcar Admin") e
 **WORKSHOP_ADMIN**, e um shell/design system inicial (`docs/decisoes/
 0003-design-system-shell.md`).
 
@@ -83,10 +84,13 @@ pnpm dev
 Abra http://localhost:3000. `/cadastro` cria uma conta de cliente, `/entrar`
 faz login. Dentro da área autenticada: `/painel` (visão geral), `/veiculos`
 (cadastro + quilometragem), `/chamados` (cliente abre chamado para uma
-oficina), `/oficina` (dashboard + `/oficina/chamados` + `/oficina/os` — só
-para quem tem o papel `WORKSHOP_ADMIN`) e `/admin` (Wezcar Admin, só para
-`PLATFORM_ADMIN`) — ver `docs/seguranca/rls-e-autenticacao.md` para como
-conceder esses papéis. `/api/health` verifica a conexão com o banco.
+oficina e, uma vez aceito, acompanha diagnóstico/orçamento e aprova em
+`/chamados/[id]`), `/oficina` (dashboard + `/oficina/chamados` — aceitar,
+recusar e, em `/oficina/chamados/[id]`, registrar diagnóstico e enviar
+orçamento — + `/oficina/os` — só para quem tem o papel `WORKSHOP_ADMIN`) e
+`/admin` (Wezcar Admin, só para `PLATFORM_ADMIN`) — ver
+`docs/seguranca/rls-e-autenticacao.md` para como conceder esses papéis.
+`/api/health` verifica a conexão com o banco.
 
 ### Rodando os testes de banco (RLS / isolamento de tenant)
 

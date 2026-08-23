@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -7,11 +8,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
-import {
-  acceptServiceRequest,
-  createWorkOrderFromServiceRequest,
-  rejectServiceRequest,
-} from "../actions";
+import { acceptServiceRequest, rejectServiceRequest } from "../actions";
 
 export default async function OficinaChamadosPage() {
   const ctx = await getNavContext();
@@ -82,11 +79,11 @@ export default async function OficinaChamadosPage() {
                     </>
                   )}
                   {request.status === "ACCEPTED" && !requestsWithWorkOrder.has(request.id) && (
-                    <form action={createWorkOrderFromServiceRequest.bind(null, request.id)}>
-                      <Button type="submit" size="sm">
-                        Criar OS
+                    <Link href={`/oficina/chamados/${request.id}`}>
+                      <Button type="button" size="sm">
+                        Diagnóstico e orçamento
                       </Button>
-                    </form>
+                    </Link>
                   )}
                   {request.status === "ACCEPTED" && requestsWithWorkOrder.has(request.id) && (
                     <span className="text-xs text-[var(--wz-text-secondary)]">

@@ -118,7 +118,23 @@ select isnt(
   'aceitar o chamado carimba accepted_at automaticamente'
 );
 
--- ── staff cria a OS a partir do chamado aceito ──────────────────────────────
+-- ── orçamento aprovado é pré-requisito pra OS desde 20260823010000 (RN-EST-002) ─────────────
+insert into public.estimates (id, tenant_id, service_request_id, customer_id)
+values ('eeeeeeee-0000-0000-0000-000000000099', '66666666-6666-6666-6666-666666666666',
+        'bbbbbbbb-0000-0000-0000-000000000001', '30303030-3030-3030-3030-303030303030');
+
+reset role;
+set local role authenticated;
+set local request.jwt.claim.sub = '30303030-3030-3030-3030-303030303030';
+
+update public.estimates set status = 'APPROVED'
+where id = 'eeeeeeee-0000-0000-0000-000000000099';
+
+reset role;
+set local role authenticated;
+set local request.jwt.claim.sub = '10101010-1010-1010-1010-101010101010';
+
+-- ── staff cria a OS a partir do chamado aceito (agora com orçamento aprovado) ───────────────
 insert into public.work_orders (id, tenant_id, service_request_id, customer_id, vehicle_id)
 values ('cccccccc-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666',
         'bbbbbbbb-0000-0000-0000-000000000001', '30303030-3030-3030-3030-303030303030',

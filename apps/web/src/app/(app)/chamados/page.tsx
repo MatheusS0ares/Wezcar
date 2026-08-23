@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -56,17 +57,26 @@ export default async function ChamadosPage() {
                   </div>
                   <StatusBadge status={request.status} />
                 </div>
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-3 flex items-center justify-between gap-2">
                   <p className="text-xs text-[var(--wz-text-secondary)]">
                     Aberto em {new Date(request.requested_at).toLocaleString("pt-BR")}
                   </p>
-                  {request.status === "OPEN" && (
-                    <form action={cancelServiceRequest.bind(null, request.id)}>
-                      <Button type="submit" variant="ghost" size="sm">
-                        Cancelar
-                      </Button>
-                    </form>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {request.status === "ACCEPTED" && (
+                      <Link href={`/chamados/${request.id}`}>
+                        <Button type="button" variant="secondary" size="sm">
+                          Diagnóstico e orçamento
+                        </Button>
+                      </Link>
+                    )}
+                    {request.status === "OPEN" && (
+                      <form action={cancelServiceRequest.bind(null, request.id)}>
+                        <Button type="submit" variant="ghost" size="sm">
+                          Cancelar
+                        </Button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </CardBody>
             </Card>
