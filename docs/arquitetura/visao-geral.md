@@ -49,6 +49,18 @@ dentro de `apps/web` conforme cada etapa do roadmap for implementada.
 | notifications, chat, reviews, reports, analytics | ⏳ |
 | customization, workflow, rules, audit, integrations | ⏳ |
 
+## Ecossistema Wezcar
+
+A tabela acima lista módulos técnicos; o mapeamento desses módulos para os
+produtos do ecossistema (Vida do Carro, Wezcar Network, Match, AI, Parts,
+Pay, Intelligence etc.) está em
+[`docs/estrategia/visao-ecossistema.md`](../estrategia/visao-ecossistema.md).
+Os princípios de arquitetura que existem para não fechar a porta para essas
+camadas futuras estão em
+[ADR 0004](../decisoes/0004-motorista-centrico-e-modularidade-do-ecossistema.md)
+— por exemplo, por que `vehicles` pertence ao cliente e não ao tenant, e por
+que histórico do veículo é sempre só-inserção.
+
 ## Estrutura do repositório
 
 Ver o README raiz para a árvore de diretórios completa e os comandos de

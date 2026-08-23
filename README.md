@@ -161,3 +161,4 @@ correspondente, (3) uma entrada em `docs/banco-de-dados/dicionario-de-dados.md`.
 - [`docs/banco-de-dados/dicionario-de-dados.md`](docs/banco-de-dados/dicionario-de-dados.md) — dicionário de dados vivo
 - [`docs/seguranca/rls-e-autenticacao.md`](docs/seguranca/rls-e-autenticacao.md) — modelo de segurança, RLS e autenticação
 - [`docs/regras-negocio/regras-essenciais.md`](docs/regras-negocio/regras-essenciais.md) — regras de negócio (RN-*)
+- [`docs/estrategia/visao-ecossistema.md`](docs/estrategia/visao-ecossistema.md) — visão de ecossistema (Vida do Carro, Network, Match, AI, Parts, Pay, Intelligence) e como ela se conecta ao que já foi construído
